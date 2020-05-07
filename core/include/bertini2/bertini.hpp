@@ -13,7 +13,7 @@
 //You should have received a copy of the GNU General Public License
 //along with bertini.hpp.  If not, see <http://www.gnu.org/licenses/>.
 //
-// Copyright(C) 2015, 2016 by Bertini2 Development Team
+// Copyright(C) 2015 - 2017 by Bertini2 Development Team
 //
 // See <http://www.gnu.org/licenses/> for a copy of the license, 
 // as well as COPYING.  Bertini2 is provided with permitted 
@@ -29,24 +29,11 @@
 #ifndef BERTINI_HPP
 #define BERTINI_HPP
 
-#include "bertini2/config.h"
 
+#include "bertini2/blackbox/argc_argv.hpp"
+#include "bertini2/blackbox/main_mode_switch.hpp"
 
-
-
-#include <complex>
-#include "bertini2/mpfr_extensions.hpp"
-#include "bertini2/mpfr_complex.hpp"
-
-#include "bertini2/function_tree.hpp"
-
-#include "bertini2/system.hpp"
-#include "bertini2/system_parsing.hpp"
-
-#include "bertini2/classic.hpp"
-
-#include <Eigen/Dense>
-#include <Eigen/LU>
+#include "bertini2/parallel.hpp"
 
 
 #endif

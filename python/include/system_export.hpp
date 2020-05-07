@@ -33,8 +33,8 @@
 
 #ifndef BERTINI_PYTHON_SYSTEM_EXPORT_HPP
 #define BERTINI_PYTHON_SYSTEM_EXPORT_HPP
-#include <bertini2/system.hpp>
-#include <bertini2/start_system.hpp>
+#include <bertini2/system/system.hpp>
+#include <bertini2/system/start_systems.hpp>
 
 
 
@@ -167,7 +167,7 @@ namespace bertini{
 			
 		private:
 			template <typename T>
-			using GenStart_ptr = Vec<T> (SystemBaseT::*)(mpz_int) const;
+			using GenStart_ptr = Vec<T> (SystemBaseT::*)(unsigned long long) const;
 			template <typename T>
 			static GenStart_ptr<T> return_GenStart_ptr()
 			{

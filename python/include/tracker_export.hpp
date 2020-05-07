@@ -21,7 +21,7 @@
 
 // individual authors of this file include:
 //
-//  Daniel Brake
+//  Dani Brake
 //  University of Notre Dame
 //  Summer 2016
 //
@@ -37,7 +37,7 @@
 
 #include "python_common.hpp"
 
-#include <bertini2/tracking/tracker.hpp>
+#include <bertini2/trackers/tracker.hpp>
 
 namespace bertini{
 	namespace python{
@@ -64,8 +64,8 @@ namespace bertini{
 
 
 			// resolve overloads for getting and setting predictor method.
-			void (TrackerT::*set_predictor_)(config::Predictor)= &TrackerT::Predictor;
-			config::Predictor (TrackerT::*get_predictor_)(void) const = &TrackerT::Predictor;
+			void (TrackerT::*set_predictor_)(Predictor)= &TrackerT::SetPredictor;
+			Predictor (TrackerT::*get_predictor_)(void) const = &TrackerT::GetPredictor;
 			
 
 
@@ -98,12 +98,12 @@ namespace bertini{
 				return &TrackerT::template Refine<T>;
 			};
 			
-			template <typename ComplexT, typename RealT>
-			using Refine4_ptr = SuccessCode (TrackerT::*)(Vec<ComplexT>&, Vec<ComplexT> const&, ComplexT const&, RealT const&, unsigned) const;
-			template <typename ComplexT, typename RealT>
-			static Refine4_ptr<ComplexT, RealT> return_Refine4_ptr()
+			template <typename ComplexT>
+			using Refine4_ptr = SuccessCode (TrackerT::*)(Vec<ComplexT>&, Vec<ComplexT> const&, ComplexT const&, double const&, unsigned) const;
+			template <typename ComplexT>
+			static Refine4_ptr<ComplexT> return_Refine4_ptr()
 			{
-				return &TrackerT::template Refine<ComplexT, RealT>;
+				return &TrackerT::template Refine<ComplexT>;
 			};
 
 			
@@ -133,12 +133,12 @@ namespace bertini{
 				return &TrackerT::template Refine<T>;
 			};
 			
-			template <typename ComplexT, typename RealT>
-			using Refine4_ptr = SuccessCode (TrackerT::*)(Vec<ComplexT>&, Vec<ComplexT> const&, ComplexT const&, RealT const&, unsigned) const;
-			template <typename ComplexT, typename RealT>
-			static Refine4_ptr<ComplexT, RealT> return_Refine4_ptr()
+			template <typename ComplexT>
+			using Refine4_ptr = SuccessCode (TrackerT::*)(Vec<ComplexT>&, Vec<ComplexT> const&, ComplexT const&, double const&, unsigned) const;
+			template <typename ComplexT>
+			static Refine4_ptr<ComplexT> return_Refine4_ptr()
 			{
-				return &TrackerT::template Refine<ComplexT, RealT>;
+				return &TrackerT::template Refine<ComplexT>;
 			};
 
 			
@@ -168,12 +168,12 @@ namespace bertini{
 				return &TrackerT::template Refine<T>;
 			};
 			
-			template <typename ComplexT, typename RealT>
-			using Refine4_ptr = SuccessCode (TrackerT::*)(Vec<ComplexT>&, Vec<ComplexT> const&, ComplexT const&, RealT const&, unsigned) const;
-			template <typename ComplexT, typename RealT>
-			static Refine4_ptr<ComplexT, RealT> return_Refine4_ptr()
+			template <typename ComplexT>
+			using Refine4_ptr = SuccessCode (TrackerT::*)(Vec<ComplexT>&, Vec<ComplexT> const&, ComplexT const&, double const&, unsigned) const;
+			template <typename ComplexT>
+			static Refine4_ptr<ComplexT> return_Refine4_ptr()
 			{
-				return &TrackerT::template Refine<ComplexT, RealT>;
+				return &TrackerT::template Refine<ComplexT>;
 			};
 			
 			
@@ -200,26 +200,26 @@ namespace bertini{
 
 
 		
-		template<typename NumT>
-		class TolerancesVisitor: public def_visitor<TolerancesVisitor<NumT> >
-		{
-			friend class def_visitor_access;
+		// template<typename NumT>
+		// class TolerancesVisitor: public def_visitor<TolerancesVisitor<NumT> >
+		// {
+		// 	friend class def_visitor_access;
 
-		public:
-			template<class PyClass>
-			void visit(PyClass& cl) const
-			{
-				cl
-				.def_readwrite("newton_before_endgame", &Tolerances<NumT>::newton_before_endgame)
-				.def_readwrite("newton_during_endgame", &Tolerances<NumT>::newton_during_endgame)
-				.def_readwrite("final_tolerance", &Tolerances<NumT>::final_tolerance)
-				.def_readwrite("final_tolerance_multiplier", &Tolerances<NumT>::final_tolerance_multiplier)
-				.def_readwrite("path_truncation_threshold", &Tolerances<NumT>::path_truncation_threshold)
-				.def_readwrite("final_tolerance_times_final_tolerance_multiplier", &Tolerances<NumT>::final_tolerance_times_final_tolerance_multiplier)
-				;
-			}
+		// public:
+		// 	template<class PyClass>
+		// 	void visit(PyClass& cl) const
+		// 	{
+		// 		cl
+		// 		.def_readwrite("newton_before_endgame", &Tolerances<NumT>::newton_before_endgame)
+		// 		.def_readwrite("newton_during_endgame", &Tolerances<NumT>::newton_during_endgame)
+		// 		.def_readwrite("final_tolerance", &Tolerances<NumT>::final_tolerance)
+		// 		.def_readwrite("final_tolerance_multiplier", &Tolerances<NumT>::final_tolerance_multiplier)
+		// 		.def_readwrite("path_truncation_threshold", &Tolerances<NumT>::path_truncation_threshold)
+		// 		.def_readwrite("final_tolerance_times_final_tolerance_multiplier", &Tolerances<NumT>::final_tolerance_times_final_tolerance_multiplier)
+		// 		;
+		// 	}
 
-		};
+		// };
 		
 		
 		// now prototypes for expose functions defined in the .cpp files for the python bindings.

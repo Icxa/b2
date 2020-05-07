@@ -13,14 +13,14 @@
 //You should have received a copy of the GNU General Public License
 //along with classic_parsing_test.cpp.  If not, see <http://www.gnu.org/licenses/>.
 //
-// Copyright(C) 2015, 2016 by Bertini2 Development Team
+// Copyright(C) 2015 - 2017 by Bertini2 Development Team
 //
 // See <http://www.gnu.org/licenses/> for a copy of the license, 
 // as well as COPYING.  Bertini2 is provided with permitted 
 // additional terms in the b2/licenses/ directory.
 
 // individual authors of this file include:
-// daniel brake, university of notre dame
+// dani brake, university of wisconsin eau claire
 
 //  parsing.cpp
 //
@@ -31,6 +31,7 @@
 //  Summer 2015
 
 #include "bertini.hpp"
+#include <bertini2/io/parsing/classic_utilities.hpp>
 #include <string>
 #include <boost/test/unit_test.hpp>
 
@@ -42,11 +43,14 @@ BOOST_AUTO_TEST_CASE(config_end_input_end_15) // 15
 {
 	std::string test_string = "abcd CONFIG\n\ntracktype: 1;\n\nEND; between INPUT\n\nvariable_group x, y;\nfunction f;\nf = x^2 + y^2 - 1;\n\nEND;  efgh";
 
-	bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
-	bertini::classic::SplitInputFile config_and_input;
-	std::string::const_iterator iter = test_string.begin();
-	std::string::const_iterator end = test_string.end();
-	phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+//	bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
+//	bertini::classic::SplitInputFile config_and_input;
+//	std::string::const_iterator iter = test_string.begin();
+//	std::string::const_iterator end = test_string.end();
+//	phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+	
+	auto config_and_input = bertini::parsing::classic::ParseInputFile(test_string);
+	
 	auto config = config_and_input.Config();
 	auto input = config_and_input.Input();
 
@@ -78,11 +82,14 @@ BOOST_AUTO_TEST_CASE(config_end_input_14) // 14
 {
 	std::string test_string = "abcd CONFIG\n\ntracktype: 1;\n\nEND; between INPUT\n\nvariable_group x, y;\nfunction f;\nf = x^2 + y^2 - 1;\n\n";
 
-	bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
-	bertini::classic::SplitInputFile config_and_input;
-	std::string::const_iterator iter = test_string.begin();
-	std::string::const_iterator end = test_string.end();
-	phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+//	bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
+//	bertini::classic::SplitInputFile config_and_input;
+//	std::string::const_iterator iter = test_string.begin();
+//	std::string::const_iterator end = test_string.end();
+//	phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+	
+	auto config_and_input = bertini::parsing::classic::ParseInputFile(test_string);
+	
 	auto config = config_and_input.Config();
 	auto input = config_and_input.Input();
 
@@ -112,11 +119,14 @@ BOOST_AUTO_TEST_CASE(config_end_end_13) // 13
 {
 	std::string test_string = "abcd CONFIG\n\ntracktype: 1;\n\nEND;\n\nvariable_group x, y;\nfunction f;\nf = x^2 + y^2 - 1;\n\nEND;  efgh";
 
-	bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
-	bertini::classic::SplitInputFile config_and_input;
-	std::string::const_iterator iter = test_string.begin();
-	std::string::const_iterator end = test_string.end();
-	phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+//	bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
+//	bertini::classic::SplitInputFile config_and_input;
+//	std::string::const_iterator iter = test_string.begin();
+//	std::string::const_iterator end = test_string.end();
+//	phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+	
+	auto config_and_input = bertini::parsing::classic::ParseInputFile(test_string);
+	
 	auto config = config_and_input.Config();
 	auto input = config_and_input.Input();
 
@@ -146,11 +156,14 @@ BOOST_AUTO_TEST_CASE(config_end__no_input_markers_12) // 12
 {
 	std::string test_string = "abcd CONFIG\n\ntracktype: 1;\n\nEND;\n\nvariable_group x, y;\nfunction f;\nf = x^2 + y^2 - 1;\n\n";
 
-	bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
-	bertini::classic::SplitInputFile config_and_input;
-	std::string::const_iterator iter = test_string.begin();
-	std::string::const_iterator end = test_string.end();
-	phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+//	bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
+//	bertini::classic::SplitInputFile config_and_input;
+//	std::string::const_iterator iter = test_string.begin();
+//	std::string::const_iterator end = test_string.end();
+//	phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+	
+	auto config_and_input = bertini::parsing::classic::ParseInputFile(test_string);
+	
 	auto config = config_and_input.Config();
 	auto input = config_and_input.Input();
 
@@ -178,11 +191,14 @@ BOOST_AUTO_TEST_CASE(config_input_end_11) // 11
 {
 	std::string test_string = "abcd CONFIG\n\ntracktype: 1;\n\nINPUT\n\nvariable_group x, y;\nfunction f;\nf = x^2 + y^2 - 1;\n\nEND;  efgh";
 
-	bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
-	bertini::classic::SplitInputFile config_and_input;
-	std::string::const_iterator iter = test_string.begin();
-	std::string::const_iterator end = test_string.end();
-	phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+//	bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
+//	bertini::classic::SplitInputFile config_and_input;
+//	std::string::const_iterator iter = test_string.begin();
+//	std::string::const_iterator end = test_string.end();
+//	phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+	
+	auto config_and_input = bertini::parsing::classic::ParseInputFile(test_string);
+	
 	auto config = config_and_input.Config();
 	auto input = config_and_input.Input();
 
@@ -218,11 +234,14 @@ BOOST_AUTO_TEST_CASE(config_input_10) // 10
 {
 	std::string test_string = "abcd CONFIG\n\ntracktype: 1;\n\n INPUT\n\nvariable_group x, y;\nfunction f;\nf = x^2 + y^2 - 1;\n\n";
 
-	bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
-	bertini::classic::SplitInputFile config_and_input;
-	std::string::const_iterator iter = test_string.begin();
-	std::string::const_iterator end = test_string.end();
-	phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+//	bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
+//	bertini::classic::SplitInputFile config_and_input;
+//	std::string::const_iterator iter = test_string.begin();
+//	std::string::const_iterator end = test_string.end();
+//	phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+	
+	auto config_and_input = bertini::parsing::classic::ParseInputFile(test_string);
+	
 	auto config = config_and_input.Config();
 	auto input = config_and_input.Input();
 
@@ -268,11 +287,14 @@ BOOST_AUTO_TEST_CASE(input_end_3) // 3
 {
 	std::string test_string = "abcd INPUT\n\nvariable_group x, y;\nfunction f;\nf = x^2 + y^2 - 1;\n\nEND;  efgh";
 
-	bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
-	bertini::classic::SplitInputFile config_and_input;
-	std::string::const_iterator iter = test_string.begin();
-	std::string::const_iterator end = test_string.end();
-	phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+//	bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
+//	bertini::classic::SplitInputFile config_and_input;
+//	std::string::const_iterator iter = test_string.begin();
+//	std::string::const_iterator end = test_string.end();
+//	phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+	
+	auto config_and_input = bertini::parsing::classic::ParseInputFile(test_string);
+	
 	auto config = config_and_input.Config();
 	auto input = config_and_input.Input();
 
@@ -299,11 +321,14 @@ BOOST_AUTO_TEST_CASE(input_2) // 2
 {
 	std::string test_string = "abcd INPUT\n\nvariable_group x, y;\nfunction f;\nf = x^2 + y^2 - 1;\n\n";
 
-	bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
-	bertini::classic::SplitInputFile config_and_input;
-	std::string::const_iterator iter = test_string.begin();
-	std::string::const_iterator end = test_string.end();
-	phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+//	bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
+//	bertini::classic::SplitInputFile config_and_input;
+//	std::string::const_iterator iter = test_string.begin();
+//	std::string::const_iterator end = test_string.end();
+//	phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+	
+	auto config_and_input = bertini::parsing::classic::ParseInputFile(test_string);
+	
 	auto config = config_and_input.Config();
 	auto input = config_and_input.Input();
 
@@ -328,11 +353,14 @@ BOOST_AUTO_TEST_CASE(end_1) // 1
 {
 	std::string test_string = "\n\nvariable_group x, y;\nfunction f;\nf = x^2 + y^2 - 1;\n\nEND;  efgh";
 
-	bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
-	bertini::classic::SplitInputFile config_and_input;
-	std::string::const_iterator iter = test_string.begin();
-	std::string::const_iterator end = test_string.end();
-	phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+//	bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
+//	bertini::classic::SplitInputFile config_and_input;
+//	std::string::const_iterator iter = test_string.begin();
+//	std::string::const_iterator end = test_string.end();
+//	phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+	
+	auto config_and_input = bertini::parsing::classic::ParseInputFile(test_string);
+	
 	auto config = config_and_input.Config();
 	auto input = config_and_input.Input();
 
@@ -358,11 +386,14 @@ BOOST_AUTO_TEST_CASE(no_markers_0) // 0
 {
 	std::string test_string = "\n\nvariable_group x, y;\nfunction f;\nf = x^2 + y^2 - 1;\n\n";
 
-	bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
-	bertini::classic::SplitInputFile config_and_input;
-	std::string::const_iterator iter = test_string.begin();
-	std::string::const_iterator end = test_string.end();
-	phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+//	bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
+//	bertini::classic::SplitInputFile config_and_input;
+//	std::string::const_iterator iter = test_string.begin();
+//	std::string::const_iterator end = test_string.end();
+//	phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+	
+	auto config_and_input = bertini::parsing::classic::ParseInputFile(test_string);
+	
 	auto config = config_and_input.Config();
 	auto input = config_and_input.Input();
 
@@ -400,11 +431,14 @@ BOOST_AUTO_TEST_CASE(config_end_9) // 9
 {
     std::string test_string = "abcd CONFIG\n\ntracktype: 1;\n\n between \n\nvariable_group x, y;\nfunction f;\nf = x^2 + y^2 - 1;\n\nEND;  efgh";
     
-    bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
-    bertini::classic::SplitInputFile config_and_input;
-    std::string::const_iterator iter = test_string.begin();
-    std::string::const_iterator end = test_string.end();
-    phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+//    bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
+//    bertini::classic::SplitInputFile config_and_input;
+//    std::string::const_iterator iter = test_string.begin();
+//    std::string::const_iterator end = test_string.end();
+//    phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+	
+	auto config_and_input = bertini::parsing::classic::ParseInputFile(test_string);
+	
     auto config = config_and_input.Config();
     auto input = config_and_input.Input();
     
@@ -428,11 +462,14 @@ BOOST_AUTO_TEST_CASE(config__8) // 8
 {
     std::string test_string = "abcd CONFIG\n\ntracktype: 1;\n\n between \n\nvariable_group x, y;\nfunction f;\nf = x^2 + y^2 - 1;\n\n  efgh";
     
-    bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
-    bertini::classic::SplitInputFile config_and_input;
-    std::string::const_iterator iter = test_string.begin();
-    std::string::const_iterator end = test_string.end();
-    phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+//    bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
+//    bertini::classic::SplitInputFile config_and_input;
+//    std::string::const_iterator iter = test_string.begin();
+//    std::string::const_iterator end = test_string.end();
+//    phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+	
+	auto config_and_input = bertini::parsing::classic::ParseInputFile(test_string);
+	
     auto config = config_and_input.Config();
     auto input = config_and_input.Input();
     
@@ -447,11 +484,14 @@ BOOST_AUTO_TEST_CASE(end_input_end_7) // 7
 {
     std::string test_string = "abcd tracktype: 1;\n\n END; between INPUT \n\nvariable_group x, y;\nfunction f;\nf = x^2 + y^2 - 1;\n\n END; efgh";
     
-    bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
-    bertini::classic::SplitInputFile config_and_input;
-    std::string::const_iterator iter = test_string.begin();
-    std::string::const_iterator end = test_string.end();
-    phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+//    bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
+//    bertini::classic::SplitInputFile config_and_input;
+//    std::string::const_iterator iter = test_string.begin();
+//    std::string::const_iterator end = test_string.end();
+//    phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+	
+	auto config_and_input = bertini::parsing::classic::ParseInputFile(test_string);
+	
     auto config = config_and_input.Config();
     auto input = config_and_input.Input();
     
@@ -465,11 +505,14 @@ BOOST_AUTO_TEST_CASE(end_input_6) // 6
 {
     std::string test_string = "abcd tracktype: 1;\n\n END; between INPUT \n\nvariable_group x, y;\nfunction f;\nf = x^2 + y^2 - 1;\n\n efgh";
     
-    bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
-    bertini::classic::SplitInputFile config_and_input;
-    std::string::const_iterator iter = test_string.begin();
-    std::string::const_iterator end = test_string.end();
-    phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+//    bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
+//    bertini::classic::SplitInputFile config_and_input;
+//    std::string::const_iterator iter = test_string.begin();
+//    std::string::const_iterator end = test_string.end();
+//    phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+	
+	auto config_and_input = bertini::parsing::classic::ParseInputFile(test_string);
+	
     auto config = config_and_input.Config();
     auto input = config_and_input.Input();
     
@@ -484,11 +527,14 @@ BOOST_AUTO_TEST_CASE(end___end_5) // 5
 {
     std::string test_string = "abcd tracktype: 1;\n\n END; between \n\nvariable_group x, y;\nfunction f;\nf = x^2 + y^2 - 1;\nEND; \n efgh";
     
-    bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
-    bertini::classic::SplitInputFile config_and_input;
-    std::string::const_iterator iter = test_string.begin();
-    std::string::const_iterator end = test_string.end();
-    phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+//    bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> parser;
+//    bertini::classic::SplitInputFile config_and_input;
+//    std::string::const_iterator iter = test_string.begin();
+//    std::string::const_iterator end = test_string.end();
+//    phrase_parse(iter, end, parser, boost::spirit::ascii::space, config_and_input);
+	
+	auto config_and_input = bertini::parsing::classic::ParseInputFile(test_string);
+	
     auto config = config_and_input.Config();
     auto input = config_and_input.Input();
     
@@ -503,8 +549,8 @@ BOOST_AUTO_TEST_CASE(uncomment)
 {
     std::string test_string = "%Title of file\n  \n tracktype: 1;  %comment about setting\n %  More full comments\n %Another line of comments\n trackit: 12;\n %commentsetting: 4; \n  %%%%%%%%%%%%%%%%%END of Settings%%%%%%%%%%%%%%\n";
     
-    bertini::classic::parsing::CommentStripper<std::string::const_iterator> parser;
-    bertini::classic::SplitInputFile config_and_input;
+    bertini::parsing::classic::CommentStripper<std::string::const_iterator> parser;
+	bertini::parsing::classic::SplitInputFile config_and_input;
     std::string::const_iterator iter = test_string.begin();
     std::string::const_iterator end = test_string.end();
     
@@ -532,12 +578,15 @@ BOOST_AUTO_TEST_CASE(test_split_and_uncomment)
 {
     std::string test_string = "%Title of file\n CONFIG \n tracktype: 1;  %comment about setting\n %  More full comments\n %Another line of comments\n trackit: 12;\n %commentsetting: 4; \n  %%%%%%%%%%%%%%%%%END of Settings%%%%%%%%%%%%%%\n END; \n stuff %more comments\n INPUT\n %Beginning comments\n variable_group x,y; %variables\n % Parameters \n parameter t; \n function f\n %Polynomials \n f = x^2 + y;\n %End of INput\n END; stuff end";
     
-    bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> split_parser;
-    bertini::classic::parsing::CommentStripper<std::string::const_iterator> comment_parser;
-    bertini::classic::SplitInputFile config_and_input;
+//    bertini::classic::parsing::SplitFileInputConfig<std::string::const_iterator> split_parser;
+    bertini::parsing::classic::CommentStripper<std::string::const_iterator> comment_parser;
+//    bertini::classic::SplitInputFile config_and_input;
     std::string::const_iterator iter = test_string.begin();
     std::string::const_iterator end = test_string.end();
-    phrase_parse(iter, end, split_parser, boost::spirit::ascii::space, config_and_input);
+//    phrase_parse(iter, end, split_parser, boost::spirit::ascii::space, config_and_input);
+	
+	auto config_and_input = bertini::parsing::classic::ParseInputFile(test_string);
+
     auto config = config_and_input.Config();
     auto input = config_and_input.Input();
     

@@ -13,22 +13,34 @@
 //You should have received a copy of the GNU General Public License
 //along with path_observers.cpp.  If not, see <http://www.gnu.org/licenses/>.
 //
-// Copyright(C) 2015, 2016 by Bertini2 Development Team
+// Copyright(C) 2015 - 2017 by Bertini2 Development Team
 //
 // See <http://www.gnu.org/licenses/> for a copy of the license, 
 // as well as COPYING.  Bertini2 is provided with permitted 
 // additional terms in the b2/licenses/ directory.
 
 // individual authors of this file include:
-// daniel brake, university of notre dame
+// dani brake, university of wisconsin eau claire
 
 
 
 
 #include <boost/test/unit_test.hpp>
 
-#include "bertini2/tracking/amp_tracker.hpp"
-#include "bertini2/tracking/observers.hpp"
+#include "bertini2/trackers/amp_tracker.hpp"
+#include "bertini2/trackers/observers.hpp"
+
+
+
+
+extern double threshold_clearance_d;
+extern bertini::mpfr_float threshold_clearance_mp;
+extern unsigned TRACKING_TEST_MPFR_DEFAULT_DIGITS;
+
+
+
+
+BOOST_AUTO_TEST_SUITE(AMP_tracker_basics)
 
 
 
@@ -38,7 +50,7 @@ using Variable = bertini::node::Variable;
 using Var = std::shared_ptr<Variable>;
 
 using VariableGroup = bertini::VariableGroup;
-
+using bertini::MakeVariable;
 
 using dbl = std::complex<double>;
 using mpfr = bertini::complex;
@@ -47,17 +59,7 @@ using mpfr_float = bertini::mpfr_float;
 
 template<typename NumType> using Vec = bertini::Vec<NumType>;
 template<typename NumType> using Mat = bertini::Mat<NumType>;
-
-extern double threshold_clearance_d;
-extern bertini::mpfr_float threshold_clearance_mp;
-extern unsigned TRACKING_TEST_MPFR_DEFAULT_DIGITS;
-
-
 using bertini::DefaultPrecision;
-
-BOOST_AUTO_TEST_SUITE(AMP_tracker_basics)
-
-
 
 
 BOOST_AUTO_TEST_CASE(accumulate_single_path_square_root)
@@ -65,9 +67,9 @@ BOOST_AUTO_TEST_CASE(accumulate_single_path_square_root)
 	DefaultPrecision(16);
 	using namespace bertini::tracking;
 
-	Var x = std::make_shared<Variable>("x");
-	Var y = std::make_shared<Variable>("y");
-	Var t = std::make_shared<Variable>("t");
+	Var x = MakeVariable("x");
+	Var y = MakeVariable("y");
+	Var t = MakeVariable("t");
 
 	System sys;
 
@@ -78,18 +80,18 @@ BOOST_AUTO_TEST_CASE(accumulate_single_path_square_root)
 	sys.AddPathVariable(t);
 	sys.AddVariableGroup(v);
 
-	auto AMP = bertini::tracking::config::AMPConfigFrom(sys);
+	auto AMP = bertini::tracking::AMPConfigFrom(sys);
 
 	bertini::tracking::AMPTracker tracker(sys);
 
 
-	config::Stepping<mpfr_float> stepping_preferences;
-	config::Newton newton_preferences;
+	SteppingConfig stepping_preferences;
+	NewtonConfig newton_preferences;
 
 
-	tracker.Setup(config::Predictor::Euler,
-	              	mpfr_float("1e-5"),
-					mpfr_float("1e5"),
+	tracker.Setup(Predictor::Euler,
+	              	1e-5,
+					1e5,
 					stepping_preferences,
 					newton_preferences);
 
@@ -101,7 +103,7 @@ BOOST_AUTO_TEST_CASE(accumulate_single_path_square_root)
 	Vec<mpfr> start_point(2);
 	Vec<mpfr> end_point;
 
-	SuccessCode tracking_success;
+	bertini::SuccessCode tracking_success;
 
 	AMPPathAccumulator<AMPTracker> path_accumulator;
 	PrecisionAccumulator<AMPTracker> precision_accumulator;
@@ -122,9 +124,9 @@ BOOST_AUTO_TEST_CASE(some_other_thing_square_root)
 	DefaultPrecision(16);
 	using namespace bertini::tracking;
 
-	Var x = std::make_shared<Variable>("x");
-	Var y = std::make_shared<Variable>("y");
-	Var t = std::make_shared<Variable>("t");
+	Var x = MakeVariable("x");
+	Var y = MakeVariable("y");
+	Var t = MakeVariable("t");
 
 	System sys;
 
@@ -135,18 +137,18 @@ BOOST_AUTO_TEST_CASE(some_other_thing_square_root)
 	sys.AddPathVariable(t);
 	sys.AddVariableGroup(v);
 
-	auto AMP = bertini::tracking::config::AMPConfigFrom(sys);
+	auto AMP = bertini::tracking::AMPConfigFrom(sys);
 
 	bertini::tracking::AMPTracker tracker(sys);
 
 
-	config::Stepping<mpfr_float> stepping_preferences;
-	config::Newton newton_preferences;
+	SteppingConfig stepping_preferences;
+	NewtonConfig newton_preferences;
 
 
-	tracker.Setup(config::Predictor::Euler,
-	              	mpfr_float("1e-5"),
-					mpfr_float("1e5"),
+	tracker.Setup(Predictor::Euler,
+	              	1e-5,
+					1e5,
 					stepping_preferences,
 					newton_preferences);
 
@@ -158,7 +160,7 @@ BOOST_AUTO_TEST_CASE(some_other_thing_square_root)
 	Vec<mpfr> start_point(2);
 	Vec<mpfr> end_point;
 
-	SuccessCode tracking_success;
+	bertini::SuccessCode tracking_success;
 
 	GoryDetailLogger<AMPTracker> tons_of_detail;
 
@@ -177,9 +179,9 @@ BOOST_AUTO_TEST_CASE(union_of_observers)
 	DefaultPrecision(16);
 	using namespace bertini::tracking;
 
-	Var x = std::make_shared<Variable>("x");
-	Var y = std::make_shared<Variable>("y");
-	Var t = std::make_shared<Variable>("t");
+	Var x = MakeVariable("x");
+	Var y = MakeVariable("y");
+	Var t = MakeVariable("t");
 
 	System sys;
 
@@ -190,18 +192,18 @@ BOOST_AUTO_TEST_CASE(union_of_observers)
 	sys.AddPathVariable(t);
 	sys.AddVariableGroup(v);
 
-	auto AMP = bertini::tracking::config::AMPConfigFrom(sys);
+	auto AMP = bertini::tracking::AMPConfigFrom(sys);
 
 	bertini::tracking::AMPTracker tracker(sys);
 
 
-	config::Stepping<mpfr_float> stepping_preferences;
-	config::Newton newton_preferences;
+	SteppingConfig stepping_preferences;
+	NewtonConfig newton_preferences;
 
 
-	tracker.Setup(config::Predictor::Euler,
-	              	mpfr_float("1e-5"),
-					mpfr_float("1e5"),
+	tracker.Setup(Predictor::Euler,
+	              	1e-5,
+					1e5,
 					stepping_preferences,
 					newton_preferences);
 
@@ -213,9 +215,9 @@ BOOST_AUTO_TEST_CASE(union_of_observers)
 	Vec<mpfr> start_point(2);
 	Vec<mpfr> end_point;
 
-	SuccessCode tracking_success;
+	bertini::SuccessCode tracking_success;
 
-	bertini::MultiObserver<AMPTracker, GoryDetailLogger, StepFailScreenPrinter> agglomeration;
+	bertini::MultiObserver<AMPTracker, GoryDetailLogger> agglomeration;
 
 	tracker.AddObserver(&agglomeration);
 

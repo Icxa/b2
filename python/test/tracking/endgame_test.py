@@ -21,7 +21,7 @@
 
 #  individual authors of this file include:
 #
-#   Daniel Brake
+#   Dani Brake
 #   University of Notre Dame
 #
 
@@ -84,14 +84,14 @@ class EndgameTest(unittest.TestCase):
         print(final_system)
         prec_config = AMPConfig(final_system);
 
-        stepping_pref = Stepping_mp();
-        newton_pref = Newton();
+        stepping_pref = SteppingConfig();
+        newton_pref = NewtonConfig();
 
 
 
         tracker = AMPTracker(final_system);
 
-        tracker.setup(Predictor.RK4, mpfr_float("1e-5"), mpfr_float("1e5"), stepping_pref, newton_pref);
+        tracker.setup(Predictor.RK4, 1e-5, 1e5, stepping_pref, newton_pref);
         tracker.precision_setup(prec_config);
 
         num_paths_to_track = td.num_start_points();
@@ -105,7 +105,7 @@ class EndgameTest(unittest.TestCase):
         for i in range(n):
             default_precision(self.ambient_precision);
             final_system.precision(self.ambient_precision);
-            start_point = td.start_pointmp(mpfr_int(i));
+            start_point = td.start_pointmp(i);
 
             bdry_pt = VectorXmp();
             track_success_code = tracker.track_path(bdry_pt,t_start, t_endgame_boundary, start_point);
@@ -115,7 +115,7 @@ class EndgameTest(unittest.TestCase):
 
 
 
-        tracker.setup(Predictor.HeunEuler, mpfr_float("1e-6"), mpfr_float("1e5"), stepping_pref, newton_pref);
+        tracker.setup(Predictor.HeunEuler, 1e-6, 1e5, stepping_pref, newton_pref);
         my_endgame = AMPCauchyEG(tracker);
 
 

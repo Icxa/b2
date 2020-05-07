@@ -21,7 +21,7 @@
 
 // individual authors of this file include:
 //
-//  Daniel Brake
+//  Dani Brake
 //  University of Notre Dame
 //  Summer 2016
 //
@@ -40,23 +40,23 @@ namespace bertini{
 		{
 			using TrackerT = typename EndgameT::TrackerType;
 			using BCT = typename TrackerTraits<TrackerT>::BaseComplexType;
+			using BRT = typename TrackerTraits<TrackerT>::BaseRealType;
 
 			cl
 			.def("cycle_number", get_cycle_number_)
 
 			.def("get_endgame_settings",&EndgameT::EndgameSettings,return_internal_reference<>())
 			.def("get_security_settings",&EndgameT::SecuritySettings,return_internal_reference<>())
-			.def("get_tolerances",&EndgameT::Tolerances, return_internal_reference<>())
 
-			.def("set_endgame_settings",&EndgameT::SetEndgameSettings)
-			.def("set_security_settings",&EndgameT::SetSecuritySettings)
-			.def("set_tolerances",&EndgameT::SetToleranceSettings,"Set the tracking tolerances")
+			.def("set_endgame_settings",&EndgameT::template Set<endgame::EndgameConfig>)
+			.def("set_security_settings",&EndgameT::template Set<endgame::SecurityConfig>)
 
 			.def("get_tracker", &EndgameT::GetTracker, return_internal_reference<>(),"Get the tracker used in this endgame.  This is the same tracker as you feed the endgame object when you make it.")
 			.def("get_system",  &EndgameT::GetSystem,  return_internal_reference<>(),"Get the tracked system")
 
 			.def("final_approximation", &EndgameT::template FinalApproximation<BCT>, return_internal_reference<>(),"Get the current approximation of the root")
-			.def("run", &EndgameT::template Run<BCT>,"Run the endgame, from start point and start time, to t=0")
+			.def("run", RunDefaultTime<BCT>(),"Run the endgame, from start point and start time, to t=0")
+			.def("run", RunCustomTime<BCT>(),"Run the endgame, from start point and start time, to your choice of target time t")
 			;
 		}
 
@@ -68,10 +68,9 @@ namespace bertini{
 			using TrackerT = typename EndgameT::TrackerType;
 
 			cl
-			.def(init<TrackerT const&, config::Cauchy<RT> const&>())
-			.def(init<TrackerT const&, config::Endgame<RT> const&>())
-			.def(init<TrackerT const&, config::Security<RT> const&>())
-			.def(init<TrackerT const&, config::Tolerances<RT> const&>());
+			.def(init<TrackerT const&, endgame::CauchyConfig const&>())
+			.def(init<TrackerT const&, endgame::EndgameConfig const&>())
+			.def(init<TrackerT const&, endgame::SecurityConfig const&>());
 
 		}
 
@@ -83,10 +82,9 @@ namespace bertini{
 			using TrackerT = typename EndgameT::TrackerType;
 
 			cl
-			.def(init<TrackerT const&, config::PowerSeries const&>())
-			.def(init<TrackerT const&, config::Endgame<RT> const&>())
-			.def(init<TrackerT const&, config::Security<RT> const&>())
-			.def(init<TrackerT const&, config::Tolerances<RT> const&>());
+			.def(init<TrackerT const&, endgame::PowerSeriesConfig const&>())
+			.def(init<TrackerT const&, endgame::EndgameConfig const&>())
+			.def(init<TrackerT const&, endgame::SecurityConfig const&>());
 		}
 
 
@@ -102,21 +100,15 @@ namespace bertini{
 
 			scope new_submodule_scope = new_submodule;
 
-			class_<config::Security<double>>("Security_d",init<>())
-			.def(SecurityVisitor<double>());
+			class_<endgame::SecurityConfig>("Security",init<>())
+			.def(SecurityVisitor());
 
-			class_<config::Security<mpfr_float>>("Security_mp",init<>())
-			.def(SecurityVisitor<mpfr_float>());
-
-			class_<config::PowerSeries>("PowerSeriesConfig",init<>())
+			class_<endgame::PowerSeriesConfig>("PowerSeriesConfig",init<>())
 			.def(PowerSeriesConfigVisitor());
 
 
-			class_<config::Cauchy<double>>("CauchyConfig_d",init<>())
-			.def(CauchyConfigVisitor<double>());
-
-			class_<config::Cauchy<mpfr_float>>("CauchyConfig_mp",init<>())
-			.def(CauchyConfigVisitor<mpfr_float>());
+			class_<endgame::CauchyConfig>("CauchyConfig",init<>())
+			.def(CauchyConfigVisitor());
 
 			
 		}
@@ -145,7 +137,7 @@ namespace bertini{
 		void ExportAMPPSEG()
 		{
 			using TrackerT = AMPTracker;
-			using EGT = typename EndgameSelector<TrackerT>::PSEG;
+			using EGT = typename endgame::EndgameSelector<TrackerT>::PSEG;
 
 			class_<EGT>("AMPPSEG",init<TrackerT const&>())
 			.def(EndgameVisitor<EGT>())
@@ -156,7 +148,7 @@ namespace bertini{
 		void ExportFMPSEG()
 		{
 			using TrackerT = MultiplePrecisionTracker;
-			using EGT = typename EndgameSelector<TrackerT>::PSEG;
+			using EGT = typename endgame::EndgameSelector<TrackerT>::PSEG;
 
 			class_<EGT>("FixedMultiplePSEG",init<TrackerT const&>())
 			.def(EndgameVisitor<EGT>())
@@ -167,7 +159,7 @@ namespace bertini{
 		void ExportFDPSEG()
 		{
 			using TrackerT = DoublePrecisionTracker;
-			using EGT = typename EndgameSelector<TrackerT>::PSEG;
+			using EGT = typename endgame::EndgameSelector<TrackerT>::PSEG;
 
 			class_<EGT>("FixedDoublePSEG",init<TrackerT const&>())
 			.def(EndgameVisitor<EGT>())
@@ -181,7 +173,7 @@ namespace bertini{
 		void ExportFDCauchyEG()
 		{
 			using TrackerT = DoublePrecisionTracker;
-			using EGT = typename EndgameSelector<TrackerT>::Cauchy;
+			using EGT = typename endgame::EndgameSelector<TrackerT>::Cauchy;
 
 			class_<EGT>("FDCauchyEG", init<TrackerT const&>())
 			.def(EndgameVisitor<EGT>())
@@ -192,7 +184,7 @@ namespace bertini{
 		void ExportFMCauchyEG()
 		{
 			using TrackerT = MultiplePrecisionTracker;
-			using EGT = typename EndgameSelector<TrackerT>::Cauchy;
+			using EGT = typename endgame::EndgameSelector<TrackerT>::Cauchy;
 
 			class_<EGT>("FMCauchyEG", init<TrackerT const&>())
 			.def(EndgameVisitor<EGT>())
@@ -204,7 +196,7 @@ namespace bertini{
 		void ExportAMPCauchyEG()
 		{
 			using TrackerT = AMPTracker;
-			using EGT = typename EndgameSelector<TrackerT>::Cauchy;
+			using EGT = typename endgame::EndgameSelector<TrackerT>::Cauchy;
 
 			class_<EGT>("AMPCauchyEG", init<TrackerT const&>())
 			.def(EndgameVisitor<EGT>())

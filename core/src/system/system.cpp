@@ -13,17 +13,17 @@
 //You should have received a copy of the GNU General Public License
 //along with system.cpp.  If not, see <http://www.gnu.org/licenses/>.
 //
-// Copyright(C) 2015, 2016 by Bertini2 Development Team
+// Copyright(C) 2015 - 2017 by Bertini2 Development Team
 //
 // See <http://www.gnu.org/licenses/> for a copy of the license, 
 // as well as COPYING.  Bertini2 is provided with permitted 
 // additional terms in the b2/licenses/ directory.
 
 // individual authors of this file include:
-// daniel brake, university of notre dame
+// dani brake, university of wisconsin eau claire
 
 
-#include "system.hpp"
+#include "bertini2/system/system.hpp"
 
 template<typename NumType> using Vec = bertini::Vec<NumType>;
 template<typename NumType> using Mat = bertini::Mat<NumType>;
@@ -34,6 +34,16 @@ BOOST_CLASS_EXPORT(bertini::System)
 
 namespace bertini 
 {
+
+	JacobianEvalMethod DefaultJacobianEvalMethod()
+	{
+		return JacobianEvalMethod::Derivatives;
+	}
+
+	bool DefaultAutoSimplify()
+	{
+		return true;
+	}
 
 	void swap(System & a, System & b)
 	{
@@ -62,6 +72,12 @@ namespace bertini
 		swap(a.is_differentiated_,b.is_differentiated_);
 		swap(a.jacobian_,b.jacobian_);
 
+		swap(a.space_derivatives_,b.space_derivatives_);
+		swap(a.time_derivatives_,b.time_derivatives_);
+
+		swap(a.assume_uniform_precision_,b.assume_uniform_precision_);
+		swap(a.jacobian_eval_method_,b.jacobian_eval_method_);
+
 		swap(a.precision_,b.precision_);
 		swap(a.is_patched_,b.is_patched_);
 		swap(a.patch_,b.patch_);
@@ -82,8 +98,13 @@ namespace bertini
 		is_patched_ = other.is_patched_;
 
 		jacobian_ = other.jacobian_;
+		space_derivatives_ = other.space_derivatives_;
+		time_derivatives_ = other.time_derivatives_;
+
 		is_differentiated_ = other.is_differentiated_;
 
+		assume_uniform_precision_ = other.assume_uniform_precision_;
+		jacobian_eval_method_ = other.jacobian_eval_method_;
 
 		time_order_of_variable_groups_ = other.time_order_of_variable_groups_;
 
@@ -97,25 +118,25 @@ namespace bertini
 		// now to do the members which are not simply copied
 		constant_subfunctions_.resize(other.constant_subfunctions_.size());
 		for (unsigned ii = 0; ii < constant_subfunctions_.size(); ++ii)
-			constant_subfunctions_[ii] = std::make_shared<bertini::node::Function>(other.constant_subfunctions_[ii]->entry_node());
+			constant_subfunctions_[ii] = MakeFunction(other.constant_subfunctions_[ii]->entry_node());
 
 		subfunctions_.resize(other.subfunctions_.size());
 		for (unsigned ii = 0; ii < subfunctions_.size(); ++ii)
-			subfunctions_[ii] = std::make_shared<bertini::node::Function>(other.subfunctions_[ii]->entry_node());
+			subfunctions_[ii] = MakeFunction(other.subfunctions_[ii]->entry_node());
 
 		functions_.resize(other.functions_.size());
 		for (unsigned ii = 0; ii < functions_.size(); ++ii)
-			functions_[ii] = std::make_shared<bertini::node::Function>(other.functions_[ii]->entry_node());
+			functions_[ii] = MakeFunction(other.functions_[ii]->entry_node());
 
 		explicit_parameters_.resize(other.explicit_parameters_.size());
 		for (unsigned ii = 0; ii < explicit_parameters_.size(); ++ii)
-			explicit_parameters_[ii] = std::make_shared<bertini::node::Function>(other.explicit_parameters_[ii]->entry_node());
+			explicit_parameters_[ii] = MakeFunction(other.explicit_parameters_[ii]->entry_node());
 	}
 
 	// the assignment operator
-	System& System::operator=(System other)
+	System& System::operator=(const System & other)
 	{
-		swap(*this, other);
+		*this = System(other);
 		return *this;
 	}
 
@@ -202,6 +223,9 @@ namespace bertini
 
 	void System::precision(unsigned new_precision) const
 	{
+		if (this->assume_uniform_precision_ && new_precision == this->precision_)
+			return;
+
 		for (const auto& iter : functions_) {
 			iter->precision(new_precision);
 		}
@@ -224,8 +248,23 @@ namespace bertini
 		}
 
 		if (is_differentiated_)
-			for (const auto& iter : jacobian_)
-				iter->precision(new_precision);
+		{
+			switch (jacobian_eval_method_)
+			{
+				case JacobianEvalMethod::JacobianNode:
+					for (const auto& iter : jacobian_)
+						iter->precision(new_precision);
+					break;
+				case JacobianEvalMethod::Derivatives:
+					for (const auto& iter : space_derivatives_)
+						iter->precision(new_precision);
+					for (const auto& iter : time_derivatives_)
+						iter->precision(new_precision);
+					break;
+				// later, case for straight line program?
+			}
+			
+		}
 
 		if (have_path_variable_)
 			path_variable_->precision(new_precision);
@@ -257,13 +296,45 @@ namespace bertini
 
 	void System::Differentiate() const
 	{
-			jacobian_.resize(NumFunctions());
-			auto num_functions = NumFunctions();
-			for (int ii = 0; ii < num_functions; ++ii)
-				jacobian_[ii] = std::make_shared<bertini::node::Jacobian>(functions_[ii]->Differentiate());
+		switch (jacobian_eval_method_)
+		{
+			case JacobianEvalMethod::JacobianNode:
+			{
+				auto num_functions = NumFunctions();
+				jacobian_.resize(num_functions);
+				for (int ii = 0; ii < num_functions; ++ii)
+					jacobian_[ii] = MakeJacobian(functions_[ii]->Differentiate());
+				break;
+			}
+			case JacobianEvalMethod::Derivatives:
+			{
+				const auto& vars = this->Variables();
+				const auto num_vars = NumVariables();
+				const auto num_functions = NumFunctions();
 
-			is_differentiated_ = true;
+				space_derivatives_.resize(num_functions*num_vars);
+				// again, computing these in column major, so staying with one variable at a time.
+				for (int jj = 0; jj < num_vars; ++jj)
+					for (int ii = 0; ii < num_functions; ++ii)
+						space_derivatives_[ii+jj*num_functions] = functions_[ii]->Differentiate(vars[jj]);
+
+				if (HavePathVariable())
+				{
+					const auto& t = path_variable_;
+					time_derivatives_.resize(num_functions);
+						for (int ii = 0; ii < num_functions; ++ii)
+							time_derivatives_[ii] = functions_[ii]->Differentiate(t);
+				}
+				break;
+			}
 		}
+		is_differentiated_ = true;
+
+		if (auto_simplify_)
+		{
+			this->SimplifyDerivatives();
+		}
+	}
 
 
 
@@ -298,7 +369,9 @@ namespace bertini
 			throw std::runtime_error("size mismatch on number of homogenizing variables and number of variable groups");
 
 		if (!already_had_homvars)
+		{
 			homogenizing_variables_.resize(NumVariableGroups());
+		}
 
 
 		auto group_counter = 0;
@@ -307,7 +380,6 @@ namespace bertini
 			std::stringstream converter;
 			converter << "HOM_VAR_" << group_counter;
 
-			
 			if (already_had_homvars){
 				Var hom_var = homogenizing_variables_[group_counter];
 				VariableGroup temp_group = *curr_var_gp;
@@ -317,16 +389,17 @@ namespace bertini
 			}
 			else
 			{
-				Var hom_var = std::make_shared<bertini::node::Variable>(converter.str());
+				Var hom_var = MakeVariable(converter.str());
 				homogenizing_variables_[group_counter] = hom_var;
 				for (const auto& curr_function : functions_)
 					curr_function->Homogenize(*curr_var_gp, hom_var);
 			}
-		
-			
 
 			group_counter++;
 		}
+
+		is_differentiated_ = false;
+		have_ordering_ = false;
 
 		#ifndef BERTINI_DISABLE_ASSERTS
 		assert(homogenizing_variables_.size() == variable_groups_.size());
@@ -535,7 +608,7 @@ namespace bertini
 
 	void System::AddFunction(Nd const& N)
 	{
-		Fn F = std::make_shared<node::Function>(N);
+		Fn F = MakeFunction(N);
 		functions_.push_back(F);
 		is_differentiated_ = false;
 	}
@@ -585,7 +658,7 @@ namespace bertini
 		return have_path_variable_;
 	}
 
-
+	
 
 
 
@@ -701,16 +774,19 @@ namespace bertini
 
 	std::vector<unsigned> System::VariableGroupSizesFIFO() const
 	{
+		bool have_homvars = NumHomVariables()>0;
+		if (have_homvars && NumHomVariables() != NumVariableGroups())
+			throw std::runtime_error("mismatch between number of homogenizing variables, and number of affine variables groups.  unable to form variable vector in FIFO ordering.  you probably need to homogenize the system.");
+
 		std::vector<unsigned> s;
 
 		unsigned hom_group_counter(0), affine_group_counter(0), patch_counter(0);
 		for (auto curr_grouptype : time_order_of_variable_groups_)
 		{
-			
 			if (curr_grouptype==VariableGroupType::Homogeneous)
 				s.push_back(hom_variable_groups_[hom_group_counter++].size());
 			else if (curr_grouptype==VariableGroupType::Affine)
-				s.push_back(variable_groups_[affine_group_counter++].size()+1);
+				s.push_back(variable_groups_[affine_group_counter++].size() + static_cast<int>(have_homvars));
 		}
 		return s;
 	}
@@ -748,45 +824,43 @@ namespace bertini
 
 			
 
-    //////////////////////
-    //
-    //  Functions involving coefficients of the system
-    //
-    ///////////////////////
-
-    mpfr_float System::CoefficientBound(unsigned num_evaluations) const
-    {
-    	mpfr_float bound("0");
-
-    	for (unsigned ii=0; ii < num_evaluations; ii++)
-    	{	
-    		Vec<mpfr> randy = RandomOfUnits<mpfr>(NumVariables());
-    		Vec<mpfr> f_vals;
-    		if (HavePathVariable())
-    			f_vals = Eval(randy, mpfr::rand());
-    		else
-    			f_vals = Eval(randy);
-	    	
-	    	auto dh_dx = Jacobian<mpfr>();
-	    	
-			bound = max(f_vals.array().abs().maxCoeff(),dh_dx.array().abs().maxCoeff(), bound);
-		}
-    	return bound;
-	}
-
-
-
-
-
-
-
 
 
     /////////////////
 	//
-	// Functions involving the degrees of functions in the systems.
+	// Functions involving the coefficients and degrees of functions in the systems.
 	//
 	///////////////////
+
+	template <typename NumT>
+	typename Eigen::NumTraits<NumT>::Real System::CoefficientBound(unsigned num_evaluations) const
+	{
+		static_assert(Eigen::NumTraits<NumT>::IsComplex,"NumT must be a complex type");
+		
+		using RT = typename Eigen::NumTraits<NumT>::Real;
+		using CT = NumT;
+
+		RT bound(0);
+
+		for (unsigned ii=0; ii < num_evaluations; ii++)
+		{	
+			Vec<CT> randy = RandomOfUnits<CT>(NumVariables());
+			Vec<CT> f_vals;
+			if (HavePathVariable())
+				f_vals = Eval(randy, RandomUnit<CT>());
+			else
+				f_vals = Eval(randy);
+			
+			Mat<CT> dh_dx = Jacobian<CT>();
+			
+			bound = max(f_vals.array().abs().maxCoeff(),
+						 dh_dx.array().abs().maxCoeff(), bound);
+		}
+		return bound;
+	}
+
+	template double System::CoefficientBound<dbl>(unsigned) const;
+	template mpfr_float System::CoefficientBound<mpfr>(unsigned) const;
 
     int System::DegreeBound() const
     {
@@ -894,7 +968,81 @@ namespace bertini
 
 
 
+	void System::SimplifyFunctions()
+	{
+		using bertini::Simplify;
+		for (auto& iter : this->functions_)
+			Simplify(iter);
+	}
 
+
+
+	void System::SimplifyDerivatives() const
+	{
+		using bertini::Simplify;
+
+		auto num_vars = this->NumVariables();
+		std::vector<dbl> old_vals(num_vars);  dbl old_path_var_val;
+
+		auto vars = this->Variables();
+		for (unsigned ii=0; ii<num_vars; ++ii)
+		{
+			old_vals[ii] = vars[ii]->Eval<dbl>();
+			vars[ii]->SetToRandUnit<dbl>();
+		}
+
+		if (HavePathVariable())
+		{
+			old_path_var_val = path_variable_->Eval<dbl>();
+			path_variable_->SetToRandUnit<dbl>();
+		}
+
+
+		for (const auto& n : jacobian_)
+			n->Reset();
+		for (const auto& n : space_derivatives_)
+			n->Reset();
+		for (const auto& n : time_derivatives_)
+			n->Reset();
+
+
+		switch (jacobian_eval_method_)
+		{
+			case JacobianEvalMethod::JacobianNode:
+				for (auto& iter : this->jacobian_)
+					Simplify(iter);
+				break;
+			case JacobianEvalMethod::Derivatives:
+				for (auto& iter : this->space_derivatives_)
+					Simplify(iter);
+				for (auto& iter : this->time_derivatives_)
+					Simplify(iter);
+				break;
+
+		}
+		
+		for (unsigned ii=0; ii<num_vars; ++ii)
+			vars[ii]->set_current_value<dbl>(old_vals[ii]);
+		if (HavePathVariable())
+			path_variable_->set_current_value(old_path_var_val);
+
+
+		for (const auto& n : jacobian_)
+			n->Reset();
+		for (const auto& n : space_derivatives_)
+			n->Reset();
+		for (const auto& n : time_derivatives_)
+			n->Reset();
+
+	}
+
+
+
+	void System::Simplify()
+	{
+		SimplifyFunctions();
+		SimplifyDerivatives();
+	}
 
 
 
@@ -959,13 +1107,32 @@ namespace bertini
 		if (s.path_variable_)
 			out << "path variable defined.  named " << s.path_variable_->name() << "\n";
 		else 
-			out << "not path variable defined\n";
+			out << "no path variable defined\n";
 
 		if (s.is_differentiated_)
 		{
 			out << "system is differentiated; jacobian:\n";
-			for (const auto& iter : s.jacobian_) {
-				out << (iter)->name() << " = " << *iter << "\n";
+			switch (s.jacobian_eval_method_)
+			{
+			case JacobianEvalMethod::JacobianNode:
+				for (const auto& iter : s.jacobian_)
+					out << (iter)->name() << " = " << *iter << "\n";
+				break;
+			case JacobianEvalMethod::Derivatives:
+				for (int jj = 0; jj < s.NumVariables(); ++jj)
+					for (int ii = 0; ii < s.NumFunctions(); ++ii)
+					{
+						const auto& d = s.space_derivatives_[ii+jj*s.NumFunctions()];
+						out << "jac_space_der(" << ii << "," << jj << ") = " << d << "\n";
+					}
+
+				if (s.HavePathVariable())
+					for (int ii = 0; ii < s.NumFunctions(); ++ii)
+					{
+						const auto& d = s.time_derivatives_[ii];
+						out << "jac_time_der(" << ii << ") = " << d << "\n";
+					}
+				break;
 			}
 			out << "\n";
 		}
@@ -1085,7 +1252,77 @@ namespace bertini
 	}
 
 
+	System Clone(System const& sys)
+	{
+
+//////////////////  attempt 1.  generates a npos == null problem of some sort.  i couldn't figure it out.
 
 
+		// namespace io = boost::iostreams;
+		// using buffer_type = std::vector<char>;
+		// buffer_type buffer;
+
+		// io::stream<io::back_insert_device<buffer_type> > output_stream(buffer);
+		// boost::archive::binary_oarchive oa(output_stream);
+
+		// oa << sys;
+		// output_stream.flush();
+
+		
+
+		// io::basic_array_source<char> source(&buffer[0],buffer.size());
+		// io::stream<io::basic_array_source <char> > input_stream(source);
+		// boost::archive::binary_iarchive ia(input_stream);
+
+		// System sys_clone;
+		// ia >> sys_clone;
+
+		// return sys_clone;
+
+
+
+///////////////////////  attempt2  generates crashes.  :(
+		// std::string serial_str;
+		// {
+		// 	boost::iostreams::back_insert_device<std::string> inserter(serial_str);
+		// 	boost::iostreams::stream<boost::iostreams::back_insert_device<std::string> > s(inserter);
+		// 	boost::archive::binary_oarchive oa(s);
+
+		// 	oa << sys;
+
+		// 	// don't forget to flush the stream to finish writing into the buffer
+		// 	s.flush();
+		// }
+		
+		// boost::iostreams::basic_array_source<char> device(serial_str.data(), serial_str.size());
+		// boost::iostreams::stream<boost::iostreams::basic_array_source<char> > t(device);
+		// boost::archive::binary_iarchive ia(t);
+		// System sys_clone;
+		// ia >> sys_clone;
+
+
+
+
+///////////////////// attempt3.  works.  why the others generate problems with the binary archive baffles me.
+
+		std::stringstream ss;
+		{
+			boost::archive::text_oarchive oa(ss);
+			oa << sys;
+		}
+
+		System sys_clone;
+		{
+			boost::archive::text_iarchive ia(ss);
+			ia >> sys_clone;
+		}
+
+		return sys_clone;
+	}
+
+	void Simplify(System & sys)
+	{
+		sys.Simplify();
+	}
 
 }

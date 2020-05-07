@@ -13,14 +13,14 @@
 //You should have received a copy of the GNU General Public License
 //along with classic.hpp.  If not, see <http://www.gnu.org/licenses/>.
 //
-// Copyright(C) 2015, 2016 by Bertini2 Development Team
+// Copyright(C) 2015 - 2017 by Bertini2 Development Team
 //
 // See <http://www.gnu.org/licenses/> for a copy of the license, 
 // as well as COPYING.  Bertini2 is provided with permitted 
 // additional terms in the b2/licenses/ directory.
 
 // individual authors of this file include:
-// daniel brake, university of notre dame
+// dani brake, University of Wisconsin Eau Claire
 
 /**
 \file classic.hpp 
@@ -32,7 +32,7 @@
 #define BERTINI_CLASSIC_HPP
 
 
-#include "bertini2/classic/parsing.hpp"
+#include "bertini2/classic/split_parsing.hpp"
 
 
 

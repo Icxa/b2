@@ -21,7 +21,7 @@
 
 // individual authors of this file include:
 //
-//  Daniel Brake
+//  Dani Brake
 //  University of Notre Dame
 //  Summer 2016
 //
@@ -32,11 +32,7 @@
 
 #include "python_common.hpp"
 
-#include <bertini2/tracking/amp_cauchy_endgame.hpp>
-#include <bertini2/tracking/amp_powerseries_endgame.hpp>
-
-#include <bertini2/tracking/fixed_prec_cauchy_endgame.hpp>
-#include <bertini2/tracking/fixed_prec_powerseries_endgame.hpp>
+#include <bertini2/endgames.hpp>
 
 namespace bertini{
 	namespace python{
@@ -59,6 +55,24 @@ namespace bertini{
 
 			using CT = typename TrackerTraits<typename EndgameT::TrackerType>::BaseComplexType;
 			using RT = typename TrackerTraits<typename EndgameT::TrackerType>::BaseRealType;
+
+			template <typename T>
+			using success_time_space = SuccessCode (EndgameT::*)(T const&, Vec<T> const&);
+			template <typename T>
+			using success_time_space_time = SuccessCode (EndgameT::*)(T const&, Vec<T> const&, T const&);
+
+			template <typename T>
+			static success_time_space<T> RunDefaultTime()
+			{
+				return &EndgameT::Run;
+			};
+
+			template <typename T>
+			static success_time_space_time<T> RunCustomTime()
+			{
+				return &EndgameT::Run;
+			};
+			
 
 			unsigned (EndgameT::*get_cycle_number_)() const = &EndgameT::CycleNumber;
 		};// EndgameVisitor class
@@ -112,8 +126,7 @@ namespace bertini{
 
 
 
-		template<typename NumT>
-		class SecurityVisitor: public def_visitor<SecurityVisitor<NumT> >
+		class SecurityVisitor: public def_visitor<SecurityVisitor>
 		{
 			friend class def_visitor_access;
 
@@ -122,8 +135,8 @@ namespace bertini{
 			void visit(PyClass& cl) const
 			{
 				cl
-				.def_readwrite("level", &Security<NumT>::level,"Turns on or off truncation of paths going to infinity during the endgame.  0 is off, 1 is on.")
-				.def_readwrite("max_norm", &Security<NumT>::max_norm,"If on, the norm of which to truncate a path.")
+				.def_readwrite("level", &endgame::SecurityConfig::level,"Turns on or off truncation of paths going to infinity during the endgame.  0 is off, 1 is on.")
+				.def_readwrite("max_norm", &endgame::SecurityConfig::max_norm,"If on, the norm at which to truncate a path.")
 				;
 			}
 
@@ -132,8 +145,8 @@ namespace bertini{
 
 
 
-		template<typename NumT>
-		class EndgameConfigVisitor: public def_visitor<EndgameConfigVisitor<NumT> >
+		
+		class EndgameConfigVisitor: public def_visitor<EndgameConfigVisitor>
 		{
 			friend class def_visitor_access;
 
@@ -142,10 +155,10 @@ namespace bertini{
 			void visit(PyClass& cl) const
 			{
 				cl
-				.def_readwrite("num_sample_points", &config::Endgame<NumT>::num_sample_points,"The number of points to use for extrapolant calculation.  In the Power Series Endgame, the is the number of geometrically spaces points on the path.  For Cauchy, this is the number of points on each circle tracked around the target time value.")
-				.def_readwrite("min_track_time", &config::Endgame<NumT>::min_track_time,"The minimum distance from the target time to track to.  Decreasing this may help failing runs succeed, or maybe not, because you are, after all, tracking toward a singularity.")
-				.def_readwrite("sample_factor", &config::Endgame<NumT>::sample_factor,"The factor by which to space the geometrically spaced `distance' between sample points, or sample circles for Cauchy.")
-				.def_readwrite("max_num_newton_iterations", &config::Endgame<NumT>::max_num_newton_iterations,"the maximum number of newton iterations to be taken during sample point sharpening.  Increasing this can help speed convergence, at the risk of path jumping.")
+				.def_readwrite("num_sample_points", &endgame::EndgameConfig::num_sample_points,"The number of points to use for extrapolant calculation.  In the Power Series Endgame, the is the number of geometrically spaces points on the path.  For Cauchy, this is the number of points on each circle tracked around the target time value.")
+				.def_readwrite("min_track_time", &endgame::EndgameConfig::min_track_time,"The minimum distance from the target time to track to.  Decreasing this may help failing runs succeed, or maybe not, because you are, after all, tracking toward a singularity.")
+				.def_readwrite("sample_factor", &endgame::EndgameConfig::sample_factor,"The factor by which to space the geometrically spaced `distance' between sample points, or sample circles for Cauchy.")
+				.def_readwrite("max_num_newton_iterations", &endgame::EndgameConfig::max_num_newton_iterations,"the maximum number of newton iterations to be taken during sample point sharpening.  Increasing this can help speed convergence, at the risk of path jumping.")
 				;
 			}
 
@@ -161,8 +174,8 @@ namespace bertini{
 			void visit(PyClass& cl) const
 			{
 				cl
-				.def_readwrite("max_cycle_number", &config::PowerSeries::max_cycle_number,"The maximum cycle number to consider, when calculating the cycle number which best fits the path being tracked.")
-				.def_readwrite("cycle_number_amplification", &config::PowerSeries::cycle_number_amplification,"The maximum number allowable iterations during endgames, for points used to approximate the final solution.")
+				.def_readwrite("max_cycle_number", &endgame::PowerSeriesConfig::max_cycle_number,"The maximum cycle number to consider, when calculating the cycle number which best fits the path being tracked.")
+				.def_readwrite("cycle_number_amplification", &endgame::PowerSeriesConfig::cycle_number_amplification,"The maximum number allowable iterations during endgames, for points used to approximate the final solution.")
 				;
 			}
 
@@ -172,8 +185,7 @@ namespace bertini{
 
 
 
-		template<typename NumT>
-		class CauchyConfigVisitor: public def_visitor<CauchyConfigVisitor<NumT> >
+		class CauchyConfigVisitor: public def_visitor<CauchyConfigVisitor>
 		{
 			friend class def_visitor_access;
 
@@ -182,11 +194,11 @@ namespace bertini{
 			void visit(PyClass& cl) const
 			{
 				cl
-				.def_readwrite("cycle_cutoff_time", &config::Cauchy<NumT>::cycle_cutoff_time)
-				.def_readwrite("ratio_cutoff_time", &config::Cauchy<NumT>::ratio_cutoff_time)
-				.def_readwrite("minimum_for_c_over_k_stabilization", &config::Cauchy<NumT>::minimum_for_c_over_k_stabilization)
-				.def_readwrite("maximum_cauchy_ratio", &config::Cauchy<NumT>::maximum_cauchy_ratio)
-				.def_readwrite("fail_safe_maximum_cycle_number", &config::Cauchy<NumT>::fail_safe_maximum_cycle_number, "max number of loops before giving up." )
+				.def_readwrite("cycle_cutoff_time", &endgame::CauchyConfig::cycle_cutoff_time)
+				.def_readwrite("ratio_cutoff_time", &endgame::CauchyConfig::ratio_cutoff_time)
+				.def_readwrite("minimum_for_c_over_k_stabilization", &endgame::CauchyConfig::minimum_for_c_over_k_stabilization)
+				.def_readwrite("maximum_cauchy_ratio", &endgame::CauchyConfig::maximum_cauchy_ratio)
+				.def_readwrite("fail_safe_maximum_cycle_number", &endgame::CauchyConfig::fail_safe_maximum_cycle_number, "max number of loops before giving up." )
 				;
 			}
 

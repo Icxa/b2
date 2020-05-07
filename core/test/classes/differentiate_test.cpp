@@ -13,23 +13,23 @@
 //You should have received a copy of the GNU General Public License
 //along with differentiate_test.cpp.  If not, see <http://www.gnu.org/licenses/>.
 //
-// Copyright(C) 2015, 2016 by Bertini2 Development Team
+// Copyright(C) 2015 - 2017 by Bertini2 Development Team
 //
 // See <http://www.gnu.org/licenses/> for a copy of the license, 
 // as well as COPYING.  Bertini2 is provided with permitted 
 // additional terms in the b2/licenses/ directory.
 
 // individual authors of this file include:
-// daniel brake, university of notre dame
+// dani brake, university of wisconsin eau claire
 //
 //  Created by Collins, James B. on 4/30/15.
 //  Copyright (c) 2015 West Texas A&M University. All rights reserved.
 //
 // also modified by
-//  Daniel Brake
+//  Dani Brake
 //  University of Notre Dame
 //  ACMS
-//  Spring, Summer 2015
+//  Spring, Summer 2015, Spring, Summer 2017
 
 #include <iostream>
 
@@ -38,8 +38,8 @@
 #include <vector>
 
 #include "bertini2/function_tree.hpp"
-#include "bertini2/system.hpp"
-#include "bertini2/system_parsing.hpp"
+#include "bertini2/system/system.hpp"
+#include "bertini2/io/parsing/system_parsers.hpp"
 
 #include <boost/spirit/include/qi.hpp>
 #include <boost/test/unit_test.hpp>
@@ -47,26 +47,25 @@
 #include <Eigen/Dense>
 
 
+
+
+#include "externs.hpp"
+
+
+BOOST_AUTO_TEST_SUITE(differentiate)
+
+
+using bertini::DefaultPrecision;
 using dbl = std::complex<double>;
 using Variable = bertini::node::Variable;
 using Node = bertini::node::Node;
 using Function = bertini::node::Function;
 using Jacobian = bertini::node::Jacobian;
-
-
+using bertini::MakeVariable;
+using bertini::MakeJacobian;
 using dbl = bertini::dbl;
 using mpfr = bertini::mpfr;
-
-#include "externs.hpp"
-
-Eigen::Matrix<dbl, 3, 1> var_dbl;
-Eigen::Matrix<mpfr, 3, 1> var_mpfr;
-
-
-
-using bertini::DefaultPrecision;
-
-BOOST_AUTO_TEST_SUITE(differentiate)
+using mpfr_float = bertini::mpfr_float;
 
 /////////// Basic Operations Alone ///////////////////
 
@@ -74,13 +73,11 @@ BOOST_AUTO_TEST_CASE(just_diff_a_function){
 	std::string str = "function f; variable_group x,y,z; f = x*y +y^2 - z*x + 9;";
 
 	bertini::System sys;
-	std::string::const_iterator iter = str.begin();
-	std::string::const_iterator end = str.end();
-	bertini::SystemParser<std::string::const_iterator> S;
-	phrase_parse(iter, end, S, boost::spirit::ascii::space, sys);
+	bertini::parsing::classic::parse(str.begin(), str.end(), sys);
+
 	auto func = sys.Function(0);
 	auto vars = sys.Variables();
-	auto JFunc = std::make_shared<Jacobian>(func->Differentiate());
+	auto JFunc = MakeJacobian(func->Differentiate());
 	for(auto vv : vars)
 	{
 		JFunc->EvalJ<dbl>(vv);
@@ -96,16 +93,16 @@ BOOST_AUTO_TEST_CASE(just_diff_a_function){
 
 
 BOOST_AUTO_TEST_CASE(diff_3xyz){
-	using mpfr_float = bertini::mpfr_float;
+	
     bertini::DefaultPrecision(CLASS_TEST_MPFR_DEFAULT_DIGITS);
 
 	std::string str = "function f; variable_group x,y,z; f = 3*x*y*z;";
 
 	bertini::System sys;
-	std::string::const_iterator iter = str.begin();
-	std::string::const_iterator end = str.end();
-	bertini::SystemParser<std::string::const_iterator> S;
-	phrase_parse(iter, end, S, boost::spirit::ascii::space, sys);
+	bertini::parsing::classic::parse(str.begin(), str.end(), sys);
+
+	Eigen::Matrix<dbl, 3, 1> var_dbl;
+	Eigen::Matrix<mpfr, 3, 1> var_mpfr;
 
 	var_dbl << xnum_dbl, ynum_dbl, znum_dbl;
 	var_mpfr << xnum_mpfr, ynum_mpfr, znum_mpfr;
@@ -114,7 +111,7 @@ BOOST_AUTO_TEST_CASE(diff_3xyz){
 
 	auto func = sys.Function(0);
 	auto vars = sys.Variables();
-	auto JFunc = std::make_shared<Jacobian>(func->Differentiate());
+	auto JFunc = MakeJacobian(func->Differentiate());
 
 	BOOST_CHECK_EQUAL(func->Degree(),3);
 
@@ -166,16 +163,16 @@ BOOST_AUTO_TEST_CASE(diff_3xyz){
 
 
 BOOST_AUTO_TEST_CASE(diff_constant){
-	using mpfr_float = bertini::mpfr_float;
+	
     bertini::DefaultPrecision(CLASS_TEST_MPFR_DEFAULT_DIGITS);
 
 	std::string str = "function f; variable_group x,y,z; f = 4.5 + i*8.2;";
 
 	bertini::System sys;
-	std::string::const_iterator iter = str.begin();
-	std::string::const_iterator end = str.end();
-	bertini::SystemParser<std::string::const_iterator> S;
-	phrase_parse(iter, end, S, boost::spirit::ascii::space, sys);
+	bertini::parsing::classic::parse(str.begin(), str.end(), sys);
+
+	Eigen::Matrix<dbl, 3, 1> var_dbl;
+	Eigen::Matrix<mpfr, 3, 1> var_mpfr;
 
 	var_dbl << xnum_dbl, ynum_dbl, znum_dbl;
 	var_mpfr << xnum_mpfr, ynum_mpfr, znum_mpfr;
@@ -184,7 +181,7 @@ BOOST_AUTO_TEST_CASE(diff_constant){
 
 	auto func = sys.Function(0);
 	auto vars = sys.Variables();
-	auto JFunc = std::make_shared<Jacobian>(func->Differentiate());
+	auto JFunc = MakeJacobian(func->Differentiate());
 
 	std::vector<int> multidegree{0,0,0};
 	bool multidegree_ok = multidegree==func->MultiDegree(vars);
@@ -213,16 +210,16 @@ BOOST_AUTO_TEST_CASE(diff_constant){
 
 
 BOOST_AUTO_TEST_CASE(diff_sum_xyz_constant){
-	using mpfr_float = bertini::mpfr_float;
+	
     bertini::DefaultPrecision(CLASS_TEST_MPFR_DEFAULT_DIGITS);
 
 	std::string str = "function f; variable_group x,y,z; f = x-y+z-4.5+i*7.3;";
 
 	bertini::System sys;
-	std::string::const_iterator iter = str.begin();
-	std::string::const_iterator end = str.end();
-	bertini::SystemParser<std::string::const_iterator> S;
-	phrase_parse(iter, end, S, boost::spirit::ascii::space, sys);
+	bertini::parsing::classic::parse(str.begin(), str.end(), sys);
+
+	Eigen::Matrix<dbl, 3, 1> var_dbl;
+	Eigen::Matrix<mpfr, 3, 1> var_mpfr;
 
 	var_dbl << xnum_dbl, ynum_dbl, znum_dbl;
 	var_mpfr << xnum_mpfr, ynum_mpfr, znum_mpfr;
@@ -231,7 +228,7 @@ BOOST_AUTO_TEST_CASE(diff_sum_xyz_constant){
 
 	auto func = sys.Function(0);
 	auto vars = sys.Variables();
-	auto JFunc = std::make_shared<Jacobian>(func->Differentiate());
+	auto JFunc = MakeJacobian(func->Differentiate());
 
 	std::vector<int> multidegree{1,1,1};
 	bool multidegree_ok = multidegree==func->MultiDegree(vars);
@@ -267,16 +264,16 @@ BOOST_AUTO_TEST_CASE(diff_sum_xyz_constant){
 
 
 BOOST_AUTO_TEST_CASE(diff_x_squared_times_z_cubed){
-	using mpfr_float = bertini::mpfr_float;
+	
     bertini::DefaultPrecision(CLASS_TEST_MPFR_DEFAULT_DIGITS);
 
 	std::string str = "function f; variable_group x,y,z; f = (x^2)*(y^3);";
 
 	bertini::System sys;
-	std::string::const_iterator iter = str.begin();
-	std::string::const_iterator end = str.end();
-	bertini::SystemParser<std::string::const_iterator> S;
-	phrase_parse(iter, end, S, boost::spirit::ascii::space, sys);
+	bertini::parsing::classic::parse(str.begin(), str.end(), sys);
+
+	Eigen::Matrix<dbl, 3, 1> var_dbl;
+	Eigen::Matrix<mpfr, 3, 1> var_mpfr;
 
 	var_dbl << xnum_dbl, ynum_dbl, znum_dbl;
 	var_mpfr << xnum_mpfr, ynum_mpfr, znum_mpfr;
@@ -285,7 +282,7 @@ BOOST_AUTO_TEST_CASE(diff_x_squared_times_z_cubed){
 
 	auto func = sys.Function(0);
 	auto vars = sys.Variables();
-	auto JFunc = std::make_shared<Jacobian>(func->Differentiate());
+	auto JFunc = MakeJacobian(func->Differentiate());
 
 	std::vector<int> multidegree{2,3,0};
 	bool multidegree_ok = multidegree==func->MultiDegree(vars);
@@ -348,16 +345,16 @@ BOOST_AUTO_TEST_CASE(diff_x_squared_times_z_cubed){
 
 
 BOOST_AUTO_TEST_CASE(diff_x_squared_over_y_cubed){
-	using mpfr_float = bertini::mpfr_float;
+	
     bertini::DefaultPrecision(CLASS_TEST_MPFR_DEFAULT_DIGITS);
 
 	std::string str = "function f; variable_group x,y,z; f = (x^2)/(y^3);";
 
 	bertini::System sys;
-	std::string::const_iterator iter = str.begin();
-	std::string::const_iterator end = str.end();
-	bertini::SystemParser<std::string::const_iterator> S;
-	phrase_parse(iter, end, S, boost::spirit::ascii::space, sys);
+	bertini::parsing::classic::parse(str.begin(), str.end(), sys);
+
+	Eigen::Matrix<dbl, 3, 1> var_dbl;
+	Eigen::Matrix<mpfr, 3, 1> var_mpfr;
 
 	var_dbl << xnum_dbl, ynum_dbl, znum_dbl;
 	var_mpfr << xnum_mpfr, ynum_mpfr, znum_mpfr;
@@ -366,7 +363,7 @@ BOOST_AUTO_TEST_CASE(diff_x_squared_over_y_cubed){
 
 	auto func = sys.Function(0);
 	auto vars = sys.Variables();
-	auto JFunc = std::make_shared<Jacobian>(func->Differentiate());
+	auto JFunc = MakeJacobian(func->Differentiate());
 
 	std::vector<int> multidegree{2,-1,0};
 	bool multidegree_ok = multidegree==func->MultiDegree(vars);
@@ -402,16 +399,16 @@ BOOST_AUTO_TEST_CASE(diff_x_squared_over_y_cubed){
 
 
 BOOST_AUTO_TEST_CASE(diff_x_squared_times_lx_plus_numl){
-	using mpfr_float = bertini::mpfr_float;
+	
     bertini::DefaultPrecision(CLASS_TEST_MPFR_DEFAULT_DIGITS);
 
 	std::string str = "function f; variable_group x,y,z; f = (x^2)*(x+3);";
 
 	bertini::System sys;
-	std::string::const_iterator iter = str.begin();
-	std::string::const_iterator end = str.end();
-	bertini::SystemParser<std::string::const_iterator> S;
-	phrase_parse(iter, end, S, boost::spirit::ascii::space, sys);
+	bertini::parsing::classic::parse(str.begin(), str.end(), sys);
+
+	Eigen::Matrix<dbl, 3, 1> var_dbl;
+	Eigen::Matrix<mpfr, 3, 1> var_mpfr;
 
 	var_dbl << xnum_dbl, ynum_dbl, znum_dbl;
 	var_mpfr << xnum_mpfr, ynum_mpfr, znum_mpfr;
@@ -420,7 +417,7 @@ BOOST_AUTO_TEST_CASE(diff_x_squared_times_lx_plus_numl){
 
 	auto func = sys.Function(0);
 	auto vars = sys.Variables();
-	auto JFunc = std::make_shared<Jacobian>(func->Differentiate());
+	auto JFunc = MakeJacobian(func->Differentiate());
 
 	std::vector<int> multidegree{3,0,0};
 	bool multidegree_ok = multidegree==func->MultiDegree(vars);
@@ -454,16 +451,16 @@ BOOST_AUTO_TEST_CASE(diff_x_squared_times_lx_plus_numl){
 }
 
 BOOST_AUTO_TEST_CASE(diff_2y_over_ly_squared_minus_numl){
-	using mpfr_float = bertini::mpfr_float;
+	
     bertini::DefaultPrecision(CLASS_TEST_MPFR_DEFAULT_DIGITS);
 
 	std::string str = "function f; variable_group x,y,z; f = y/(y+1);";
 
 	bertini::System sys;
-	std::string::const_iterator iter = str.begin();
-	std::string::const_iterator end = str.end();
-	bertini::SystemParser<std::string::const_iterator> S;
-	phrase_parse(iter, end, S, boost::spirit::ascii::space, sys);
+	bertini::parsing::classic::parse(str.begin(), str.end(), sys);
+
+	Eigen::Matrix<dbl, 3, 1> var_dbl;
+	Eigen::Matrix<mpfr, 3, 1> var_mpfr;
 
 	var_dbl << xnum_dbl, ynum_dbl, znum_dbl;
 	var_mpfr << xnum_mpfr, ynum_mpfr, znum_mpfr;
@@ -472,7 +469,7 @@ BOOST_AUTO_TEST_CASE(diff_2y_over_ly_squared_minus_numl){
 
 	auto func = sys.Function(0);
 	auto vars = sys.Variables();
-	auto JFunc = std::make_shared<Jacobian>(func->Differentiate());
+	auto JFunc = MakeJacobian(func->Differentiate());
 
 	std::vector<int> multidegree{0,-1,0};
 	bool multidegree_ok = multidegree==func->MultiDegree(vars);
@@ -508,16 +505,16 @@ BOOST_AUTO_TEST_CASE(diff_2y_over_ly_squared_minus_numl){
 
 
 BOOST_AUTO_TEST_CASE(diff_sin_x){
-	using mpfr_float = bertini::mpfr_float;
+	
     bertini::DefaultPrecision(CLASS_TEST_MPFR_DEFAULT_DIGITS);
 
 	std::string str = "function f; variable_group x,y,z; f = sin(x);";
 
 	bertini::System sys;
-	std::string::const_iterator iter = str.begin();
-	std::string::const_iterator end = str.end();
-	bertini::SystemParser<std::string::const_iterator> S;
-	phrase_parse(iter, end, S, boost::spirit::ascii::space, sys);
+	bertini::parsing::classic::parse(str.begin(), str.end(), sys);
+
+	Eigen::Matrix<dbl, 3, 1> var_dbl;
+	Eigen::Matrix<mpfr, 3, 1> var_mpfr;
 
 	var_dbl << xnum_dbl, ynum_dbl, znum_dbl;
 	var_mpfr << xnum_mpfr, ynum_mpfr, znum_mpfr;
@@ -526,7 +523,7 @@ BOOST_AUTO_TEST_CASE(diff_sin_x){
 
 	auto func = sys.Function(0);
 	auto vars = sys.Variables();
-	auto JFunc = std::make_shared<Jacobian>(func->Differentiate());
+	auto JFunc = MakeJacobian(func->Differentiate());
 
 	std::vector<int> multidegree{-1,0,0};
 	bool multidegree_ok = multidegree==func->MultiDegree(vars);
@@ -560,16 +557,16 @@ BOOST_AUTO_TEST_CASE(diff_sin_x){
 
 
 BOOST_AUTO_TEST_CASE(diff_cos_y){
-	using mpfr_float = bertini::mpfr_float;
+	
     bertini::DefaultPrecision(CLASS_TEST_MPFR_DEFAULT_DIGITS);
 
 	std::string str = "function f; variable_group x,y,z; f = cos(y);";
 
 	bertini::System sys;
-	std::string::const_iterator iter = str.begin();
-	std::string::const_iterator end = str.end();
-	bertini::SystemParser<std::string::const_iterator> S;
-	phrase_parse(iter, end, S, boost::spirit::ascii::space, sys);
+	bertini::parsing::classic::parse(str.begin(), str.end(), sys);
+
+	Eigen::Matrix<dbl, 3, 1> var_dbl;
+	Eigen::Matrix<mpfr, 3, 1> var_mpfr;
 
 	var_dbl << xnum_dbl, ynum_dbl, znum_dbl;
 	var_mpfr << xnum_mpfr, ynum_mpfr, znum_mpfr;
@@ -578,7 +575,7 @@ BOOST_AUTO_TEST_CASE(diff_cos_y){
 
 	auto func = sys.Function(0);
 	auto vars = sys.Variables();
-	auto JFunc = std::make_shared<Jacobian>(func->Differentiate());
+	auto JFunc = MakeJacobian(func->Differentiate());
 
 	std::vector<int> multidegree{0,-1,0};
 	bool multidegree_ok = multidegree==func->MultiDegree(vars);
@@ -613,16 +610,16 @@ BOOST_AUTO_TEST_CASE(diff_cos_y){
 
 
 BOOST_AUTO_TEST_CASE(diff_tan_z){
-	using mpfr_float = bertini::mpfr_float;
+	
     bertini::DefaultPrecision(CLASS_TEST_MPFR_DEFAULT_DIGITS);
 
 	std::string str = "function f; variable_group x,y,z; f = tan(z);";
 
 	bertini::System sys;
-	std::string::const_iterator iter = str.begin();
-	std::string::const_iterator end = str.end();
-	bertini::SystemParser<std::string::const_iterator> S;
-	phrase_parse(iter, end, S, boost::spirit::ascii::space, sys);
+	bertini::parsing::classic::parse(str.begin(), str.end(), sys);
+
+	Eigen::Matrix<dbl, 3, 1> var_dbl;
+	Eigen::Matrix<mpfr, 3, 1> var_mpfr;
 
 	var_dbl << xnum_dbl, ynum_dbl, znum_dbl;
 	var_mpfr << xnum_mpfr, ynum_mpfr, znum_mpfr;
@@ -631,7 +628,7 @@ BOOST_AUTO_TEST_CASE(diff_tan_z){
 
 	auto func = sys.Function(0);
 	auto vars = sys.Variables();
-	auto JFunc = std::make_shared<Jacobian>(func->Differentiate());
+	auto JFunc = MakeJacobian(func->Differentiate());
 
 	BOOST_CHECK_EQUAL(func->Degree(vars[0]),0);
 	BOOST_CHECK_EQUAL(func->Degree(vars[1]),0);
@@ -660,16 +657,16 @@ BOOST_AUTO_TEST_CASE(diff_tan_z){
 
 
 BOOST_AUTO_TEST_CASE(diff_exp_x){
-	using mpfr_float = bertini::mpfr_float;
+	
     bertini::DefaultPrecision(CLASS_TEST_MPFR_DEFAULT_DIGITS);
 
 	std::string str = "function f; variable_group x,y,z; f = exp(x);";
 
 	bertini::System sys;
-	std::string::const_iterator iter = str.begin();
-	std::string::const_iterator end = str.end();
-	bertini::SystemParser<std::string::const_iterator> S;
-	phrase_parse(iter, end, S, boost::spirit::ascii::space, sys);
+	bertini::parsing::classic::parse(str.begin(), str.end(), sys);
+
+	Eigen::Matrix<dbl, 3, 1> var_dbl;
+	Eigen::Matrix<mpfr, 3, 1> var_mpfr;
 
 	var_dbl << xnum_dbl, ynum_dbl, znum_dbl;
 	var_mpfr << xnum_mpfr, ynum_mpfr, znum_mpfr;
@@ -678,7 +675,7 @@ BOOST_AUTO_TEST_CASE(diff_exp_x){
 
 	auto func = sys.Function(0);
 	auto vars = sys.Variables();
-	auto JFunc = std::make_shared<Jacobian>(func->Differentiate());
+	auto JFunc = MakeJacobian(func->Differentiate());
 
 
 	BOOST_CHECK_EQUAL(func->Degree(vars[0]),-1);
@@ -709,16 +706,16 @@ BOOST_AUTO_TEST_CASE(diff_exp_x){
 
 
 BOOST_AUTO_TEST_CASE(diff_log_x){
-	using mpfr_float = bertini::mpfr_float;
+	
 	bertini::DefaultPrecision(CLASS_TEST_MPFR_DEFAULT_DIGITS);
 
 	std::string str = "function f; variable_group x,y,z; f = log(x^2+y);";
 
 	bertini::System sys;
-	std::string::const_iterator iter = str.begin();
-	std::string::const_iterator end = str.end();
-	bertini::SystemParser<std::string::const_iterator> S;
-	phrase_parse(iter, end, S, boost::spirit::ascii::space, sys);
+	bertini::parsing::classic::parse(str.begin(), str.end(), sys);
+
+	Eigen::Matrix<dbl, 3, 1> var_dbl;
+	Eigen::Matrix<mpfr, 3, 1> var_mpfr;
 
 	var_dbl << xnum_dbl, ynum_dbl, znum_dbl;
 	var_mpfr << xnum_mpfr, ynum_mpfr, znum_mpfr;
@@ -728,7 +725,7 @@ BOOST_AUTO_TEST_CASE(diff_log_x){
 
 	auto func = sys.Function(0);
 	auto vars = sys.Variables();
-	auto JFunc = std::make_shared<Jacobian>(func->Differentiate());
+	auto JFunc = MakeJacobian(func->Differentiate());
 
 	BOOST_CHECK_EQUAL(func->Degree(vars[0]),-1);
 	BOOST_CHECK_EQUAL(func->Degree(vars[1]),-1);
@@ -758,16 +755,16 @@ BOOST_AUTO_TEST_CASE(diff_log_x){
 
 
 BOOST_AUTO_TEST_CASE(diff_sqrt_y){
-	using mpfr_float = bertini::mpfr_float;
+	
     bertini::DefaultPrecision(CLASS_TEST_MPFR_DEFAULT_DIGITS);
 
 	std::string str = "function f; variable_group x,y,z; f = sqrt(y);";
 
 	bertini::System sys;
-	std::string::const_iterator iter = str.begin();
-	std::string::const_iterator end = str.end();
-	bertini::SystemParser<std::string::const_iterator> S;
-	phrase_parse(iter, end, S, boost::spirit::ascii::space, sys);
+	bertini::parsing::classic::parse(str.begin(), str.end(), sys);
+
+	Eigen::Matrix<dbl, 3, 1> var_dbl;
+	Eigen::Matrix<mpfr, 3, 1> var_mpfr;
 
 	var_dbl << xnum_dbl, ynum_dbl, znum_dbl;
 	var_mpfr << xnum_mpfr, ynum_mpfr, znum_mpfr;
@@ -776,7 +773,7 @@ BOOST_AUTO_TEST_CASE(diff_sqrt_y){
 
 	auto func = sys.Function(0);
 	auto vars = sys.Variables();
-	auto JFunc = std::make_shared<Jacobian>(func->Differentiate());
+	auto JFunc = MakeJacobian(func->Differentiate());
 
 
 	BOOST_CHECK_EQUAL(func->Degree(vars[0]),0);
@@ -809,16 +806,16 @@ BOOST_AUTO_TEST_CASE(diff_sqrt_y){
 
 /////////// Chain Rule ///////////////////
 BOOST_AUTO_TEST_CASE(diff_lz_plus_3l_cubed){
-	using mpfr_float = bertini::mpfr_float;
+	
     bertini::DefaultPrecision(CLASS_TEST_MPFR_DEFAULT_DIGITS);
 
 	std::string str = "function f; variable_group x,y,z; f = (z+3)^3;";
 
 	bertini::System sys;
-	std::string::const_iterator iter = str.begin();
-	std::string::const_iterator end = str.end();
-	bertini::SystemParser<std::string::const_iterator> S;
-	phrase_parse(iter, end, S, boost::spirit::ascii::space, sys);
+	bertini::parsing::classic::parse(str.begin(), str.end(), sys);
+
+	Eigen::Matrix<dbl, 3, 1> var_dbl;
+	Eigen::Matrix<mpfr, 3, 1> var_mpfr;
 
 	var_dbl << xnum_dbl, ynum_dbl, znum_dbl;
 	var_mpfr << xnum_mpfr, ynum_mpfr, znum_mpfr;
@@ -827,7 +824,7 @@ BOOST_AUTO_TEST_CASE(diff_lz_plus_3l_cubed){
 
 	auto func = sys.Function(0);
 	auto vars = sys.Variables();
-	auto JFunc = std::make_shared<Jacobian>(func->Differentiate());
+	auto JFunc = MakeJacobian(func->Differentiate());
 
 	std::vector<int> multidegree{0,0,3};
 	bool multidegree_ok = multidegree==func->MultiDegree(vars);
@@ -863,18 +860,16 @@ BOOST_AUTO_TEST_CASE(diff_lz_plus_3l_cubed){
 
 
 BOOST_AUTO_TEST_CASE(diff_x_squared_plus_y_squared_plus_z_squared){
-	using mpfr_float = bertini::mpfr_float;
+	
     bertini::DefaultPrecision(CLASS_TEST_MPFR_DEFAULT_DIGITS);
 
 	std::string str = "function f; variable_group x,y,z; f = x^2+y^2+z^2;";
 
 	bertini::System sys;
-	
+	bertini::parsing::classic::parse(str.begin(), str.end(), sys);
 
-	std::string::const_iterator iter = str.begin();
-	std::string::const_iterator end = str.end();
-	bertini::SystemParser<std::string::const_iterator> S;
-	phrase_parse(iter, end, S, boost::spirit::ascii::space, sys);
+	Eigen::Matrix<dbl, 3, 1> var_dbl;
+	Eigen::Matrix<mpfr, 3, 1> var_mpfr;
 
 	var_dbl << xnum_dbl, ynum_dbl, znum_dbl;
 	var_mpfr << xnum_mpfr, ynum_mpfr, znum_mpfr;
@@ -883,7 +878,7 @@ BOOST_AUTO_TEST_CASE(diff_x_squared_plus_y_squared_plus_z_squared){
 
 	auto func = sys.Function(0);
 	auto vars = sys.Variables();
-	auto JFunc = std::make_shared<Jacobian>(func->Differentiate());
+	auto JFunc = MakeJacobian(func->Differentiate());
 
 	std::vector<int> multidegree{2,2,2};
 	bool multidegree_ok = multidegree==func->MultiDegree(vars);
@@ -922,16 +917,16 @@ BOOST_AUTO_TEST_CASE(diff_x_squared_plus_y_squared_plus_z_squared){
 
 
 BOOST_AUTO_TEST_CASE(diff_sin_lx_squared_times_yl){
-	using mpfr_float = bertini::mpfr_float;
+	
     bertini::DefaultPrecision(CLASS_TEST_MPFR_DEFAULT_DIGITS);
 
 	std::string str = "function f; variable_group x,y,z; f = sin(x*y);";
 
 	bertini::System sys;
-	std::string::const_iterator iter = str.begin();
-	std::string::const_iterator end = str.end();
-	bertini::SystemParser<std::string::const_iterator> S;
-	phrase_parse(iter, end, S, boost::spirit::ascii::space, sys);
+	bertini::parsing::classic::parse(str.begin(), str.end(), sys);
+
+	Eigen::Matrix<dbl, 3, 1> var_dbl;
+	Eigen::Matrix<mpfr, 3, 1> var_mpfr;
 
 	var_dbl << xnum_dbl, ynum_dbl, znum_dbl;
 	var_mpfr << xnum_mpfr, ynum_mpfr, znum_mpfr;
@@ -940,7 +935,7 @@ BOOST_AUTO_TEST_CASE(diff_sin_lx_squared_times_yl){
 
 	auto func = sys.Function(0);
 	auto vars = sys.Variables();
-	auto JFunc = std::make_shared<Jacobian>(func->Differentiate());
+	auto JFunc = MakeJacobian(func->Differentiate());
 
 	std::vector<int> multidegree{-1,-1,0};
 	bool multidegree_ok = multidegree==func->MultiDegree(vars);
@@ -975,16 +970,16 @@ BOOST_AUTO_TEST_CASE(diff_sin_lx_squared_times_yl){
 
 
 BOOST_AUTO_TEST_CASE(diff_cos_lx_squaredl){
-	using mpfr_float = bertini::mpfr_float;
+	
     bertini::DefaultPrecision(CLASS_TEST_MPFR_DEFAULT_DIGITS);
 
 	std::string str = "function f; variable_group x,y,z; f = cos(x^2);";
 
 	bertini::System sys;
-	std::string::const_iterator iter = str.begin();
-	std::string::const_iterator end = str.end();
-	bertini::SystemParser<std::string::const_iterator> S;
-	phrase_parse(iter, end, S, boost::spirit::ascii::space, sys);
+	bertini::parsing::classic::parse(str.begin(), str.end(), sys);
+
+	Eigen::Matrix<dbl, 3, 1> var_dbl;
+	Eigen::Matrix<mpfr, 3, 1> var_mpfr;
 
 	var_dbl << xnum_dbl, ynum_dbl, znum_dbl;
 	var_mpfr << xnum_mpfr, ynum_mpfr, znum_mpfr;
@@ -993,7 +988,7 @@ BOOST_AUTO_TEST_CASE(diff_cos_lx_squaredl){
 
 	auto func = sys.Function(0);
 	auto vars = sys.Variables();
-	auto JFunc = std::make_shared<Jacobian>(func->Differentiate());
+	auto JFunc = MakeJacobian(func->Differentiate());
 
 	std::vector<int> multidegree{-1,0,0};
 	bool multidegree_ok = multidegree==func->MultiDegree(vars);
@@ -1026,17 +1021,17 @@ BOOST_AUTO_TEST_CASE(diff_cos_lx_squaredl){
 
 
 BOOST_AUTO_TEST_CASE(diff_tan_lx_over_zl){
-	using mpfr_float = bertini::mpfr_float;
+	
     bertini::DefaultPrecision(CLASS_TEST_MPFR_DEFAULT_DIGITS);
 
 	std::string str = "function f; variable_group x,y,z; f = tan(x/z);";
 
 	bertini::System sys;
-	std::string::const_iterator iter = str.begin();
-	std::string::const_iterator end = str.end();
-	bertini::SystemParser<std::string::const_iterator> S;
-	phrase_parse(iter, end, S, boost::spirit::ascii::space, sys);
+	bertini::parsing::classic::parse(str.begin(), str.end(), sys);
 
+	Eigen::Matrix<dbl, 3, 1> var_dbl;
+	Eigen::Matrix<mpfr, 3, 1> var_mpfr;
+	
 	var_dbl << xnum_dbl, ynum_dbl, znum_dbl;
 	var_mpfr << xnum_mpfr, ynum_mpfr, znum_mpfr;
 	sys.SetVariables<dbl>(var_dbl);
@@ -1044,7 +1039,7 @@ BOOST_AUTO_TEST_CASE(diff_tan_lx_over_zl){
 
 	auto func = sys.Function(0);
 	auto vars = sys.Variables();
-	auto JFunc = std::make_shared<Jacobian>(func->Differentiate());
+	auto JFunc = MakeJacobian(func->Differentiate());
 
 	std::vector<int> multidegree{-1,0,-1};
 	bool multidegree_ok = multidegree==func->MultiDegree(vars);
@@ -1083,9 +1078,9 @@ BOOST_AUTO_TEST_CASE(diff_tan_lx_over_zl){
 
 BOOST_AUTO_TEST_CASE(arcsine_differentiate)
 {
-	std::shared_ptr<Variable> x = std::make_shared<Variable>("x");
+	std::shared_ptr<Variable> x = MakeVariable("x");
 	auto N = asin(pow(x,2)+1);
-	auto J = std::make_shared<Jacobian>(N->Differentiate());
+	auto J = MakeJacobian(N->Differentiate());
 
 	x->set_current_value<dbl>(xnum_dbl);
 	x->set_current_value<mpfr>(bertini::complex(xstr_real,xstr_imag));
@@ -1103,9 +1098,9 @@ BOOST_AUTO_TEST_CASE(arcsine_differentiate)
 
 BOOST_AUTO_TEST_CASE(arccosine_differentiate)
 {
-	std::shared_ptr<Variable> x = std::make_shared<Variable>("x");
+	std::shared_ptr<Variable> x = MakeVariable("x");
 	auto N = acos(pow(x,2)+1);
-	auto J = std::make_shared<Jacobian>(N->Differentiate());
+	auto J = MakeJacobian(N->Differentiate());
 
 	x->set_current_value<dbl>(xnum_dbl);
 	x->set_current_value<mpfr>(bertini::complex(xstr_real,xstr_imag));
@@ -1121,9 +1116,9 @@ BOOST_AUTO_TEST_CASE(arccosine_differentiate)
 
 BOOST_AUTO_TEST_CASE(arctangent_differentiate)
 {
-	std::shared_ptr<Variable> x = std::make_shared<Variable>("x");
+	std::shared_ptr<Variable> x = MakeVariable("x");
 	auto N = atan(pow(x,2)+1);
-	auto J = std::make_shared<Jacobian>(N->Differentiate());
+	auto J = MakeJacobian(N->Differentiate());
 
 
 	x->set_current_value<dbl>(xnum_dbl);
@@ -1141,18 +1136,15 @@ BOOST_AUTO_TEST_CASE(arctangent_differentiate)
 
 
 BOOST_AUTO_TEST_CASE(integer_power)
-{
-	using mpfr =bertini::complex;
-	using mpfr_float = bertini::mpfr_float;
+{	
 
 	DefaultPrecision(CLASS_TEST_MPFR_DEFAULT_DIGITS);
-	std::cout.precision(CLASS_TEST_MPFR_DEFAULT_DIGITS);
 
-	bertini::Var x = std::make_shared<Variable>("x");
-	bertini::Var t = std::make_shared<Variable>("t"); 
+	std::shared_ptr<Variable> x = MakeVariable("x");
+	std::shared_ptr<Variable> t = MakeVariable("t");
 
 	auto f = pow(x - 1,2)*(1-t) + (pow(x,2) + 1)*t;
-	std::shared_ptr<Jacobian> j = std::make_shared<Jacobian>(f->Differentiate());
+	std::shared_ptr<Jacobian> j = MakeJacobian(f->Differentiate());
 
 
 	x->set_current_value(mpfr("-0.844487","-0.535576"));
@@ -1167,24 +1159,21 @@ BOOST_AUTO_TEST_CASE(integer_power)
     j->Reset();
 	J = j->EvalJ<mpfr>(x);
 
-	BOOST_CHECK(abs( real(J) ) < threshold_clearance_mp);
-	BOOST_CHECK(abs( imag(J) - mpfr_float("0.871779788708134710447396396772")) < threshold_clearance_mp);
+	BOOST_CHECK(abs(real(J)-mpfr_float(0)) < threshold_clearance_mp);
+	BOOST_CHECK_CLOSE(imag(J), mpfr_float("0.871779788708134710447396396772"), 100*threshold_clearance_mp);
 }
 
 
 
 
 BOOST_AUTO_TEST_CASE(integer_power_system)
-{
-	using mpfr =bertini::complex;
-	using mpfr_float = bertini::mpfr_float;
+{	
 	using System = bertini::System;
 
 	DefaultPrecision(CLASS_TEST_MPFR_DEFAULT_DIGITS);
-	std::cout.precision(CLASS_TEST_MPFR_DEFAULT_DIGITS);
 	System sys;
-	bertini::Var x = std::make_shared<Variable>("x");
-	bertini::Var t = std::make_shared<Variable>("t"); 
+	std::shared_ptr<Variable> x = MakeVariable("x");
+	std::shared_ptr<Variable> t = MakeVariable("t"); 
 
 	sys.AddFunction( pow(x - 1,2)*(1-t) + (pow(x,2) + 1)*t);
 
@@ -1202,10 +1191,11 @@ BOOST_AUTO_TEST_CASE(integer_power_system)
 
 	curr_x << mpfr("0.900000000000000","0.435889894354067355223698198386");
 	curr_t = mpfr("0.1");
+
 	J = sys.Jacobian(curr_x,curr_t);
 
-	BOOST_CHECK(abs( real(J(0,0)) ) < threshold_clearance_mp);
-	BOOST_CHECK(abs( imag(J(0,0)) - mpfr_float("0.871779788708134710447396396772")) < threshold_clearance_mp);
+	BOOST_CHECK(abs(real(J(0,0))- mpfr_float(0)) < threshold_clearance_mp);
+	BOOST_CHECK_CLOSE(imag(J(0,0)), mpfr_float("0.871779788708134710447396396772"), 100*threshold_clearance_mp);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

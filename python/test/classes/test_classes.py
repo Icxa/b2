@@ -26,11 +26,13 @@
 #   Spring 2016
 # 
 
-import mpfr_test
-import function_tree_test
-import differentiation_test
-import system_test
-import parser_test
+from __future__ import print_function
+
+import classes.mpfr_test as mpfr_test
+import classes.function_tree_test as function_tree_test
+import classes.differentiation_test as differentiation_test
+import classes.system_test as system_test
+import classes.parser_test as parser_test
 
 import unittest
 
@@ -39,10 +41,10 @@ import unittest
 
 mods = (mpfr_test, function_tree_test, differentiation_test, system_test, parser_test)
 suite = unittest.TestSuite();
-print mods
+print(mods)
 for tests in mods:
     thissuite = unittest.TestLoader().loadTestsFromModule(tests);
-    print thissuite
+    print(thissuite)
     suite.addTests(thissuite)
 #
 unittest.TextTestRunner(verbosity=2).run(suite)

@@ -13,14 +13,14 @@
 //You should have received a copy of the GNU General Public License
 //along with pool_test.cpp.  If not, see <http://www.gnu.org/licenses/>.
 //
-// Copyright(C) 2015, 2016 by Bertini2 Development Team
+// Copyright(C) 2015 - 2017 by Bertini2 Development Team
 //
 // See <http://www.gnu.org/licenses/> for a copy of the license, 
 // as well as COPYING.  Bertini2 is provided with permitted 
 // additional terms in the b2/licenses/ directory.
 
 // individual authors of this file include:
-// daniel brake, university of notre dame
+// dani brake, university of wisconsin eau claire
 
 
 //pool_test.cpp
@@ -43,10 +43,8 @@ using sec_level = boost::log::trivial::severity_level;
 using LoggingInit = bertini::LoggingInit;
 
 
-#include "bertini2/system_pool.hpp"
+#include "bertini2/pool/system.hpp"
 
-#define BERTINI_MAKE_VARIABLE(name) \
-std::shared_ptr<bertini::node::Variable> name = std::make_shared<bertini::node::Variable>("name");
 
 BOOST_GLOBAL_FIXTURE( LoggingInit );
 
@@ -66,9 +64,9 @@ BOOST_AUTO_TEST_CASE(make_nonpointer_system_and_add_to_pool)
 	SystemPool sp;
 
 	System sys;
-	BERTINI_MAKE_VARIABLE(x)
-	BERTINI_MAKE_VARIABLE(y)
-	BERTINI_MAKE_VARIABLE(z)
+	auto x = MakeVariable("x");
+	auto y = MakeVariable("y");
+	auto z = MakeVariable("z");
 	
 	sys.AddVariableGroup(VariableGroup({x,y,z}));  
 	sys.AddFunction(x);
@@ -86,9 +84,9 @@ BOOST_AUTO_TEST_CASE(make_new_sys_from_pool)
 	SystemPool sp;
 	std::shared_ptr<System> sys = sp.NewObj();
 
-	BERTINI_MAKE_VARIABLE(x)
-	BERTINI_MAKE_VARIABLE(y)
-	BERTINI_MAKE_VARIABLE(z)
+	auto x = MakeVariable("x");
+	auto y = MakeVariable("y");
+	auto z = MakeVariable("z");
 	
 	sys->AddVariableGroup(VariableGroup({x,y,z}));  
 	sys->AddFunction(x);
@@ -102,9 +100,9 @@ BOOST_AUTO_TEST_CASE(add_ptr_sys_to_pool)
 	SystemPool sp;
 	std::shared_ptr<System> sys = std::make_shared<System>();
 
-	BERTINI_MAKE_VARIABLE(x)
-	BERTINI_MAKE_VARIABLE(y)
-	BERTINI_MAKE_VARIABLE(z)
+	auto x = MakeVariable("x");
+	auto y = MakeVariable("y");
+	auto z = MakeVariable("z");
 	
 	sys->AddVariableGroup(VariableGroup({x,y,z}));  
 	sys->AddFunction(x);

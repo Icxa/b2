@@ -13,14 +13,14 @@
 //You should have received a copy of the GNU General Public License
 //along with visitable.hpp.  If not, see <http://www.gnu.org/licenses/>.
 //
-// Copyright(C) 2016 by Bertini2 Development Team
+// Copyright(C) 2015 - 2017 by Bertini2 Development Team
 //
 // See <http://www.gnu.org/licenses/> for a copy of the license, 
 // as well as COPYING.  Bertini2 is provided with permitted 
 // additional terms in the b2/licenses/ directory.
 
 // individual authors of this file include:
-// Daniel Brake
+// Dani Brake
 // University of Notre Dame
 //
 
@@ -132,9 +132,18 @@ namespace bertini{
 		/**
 		\brief Add an observer, to observe this observable.
 		*/
-		void AddObserver(AnyObserver* new_observer)
+		void AddObserver(AnyObserver* new_observer) const
 		{
-			current_watchers_.push_back(new_observer);
+			if (find(begin(current_watchers_), end(current_watchers_), new_observer)==end(current_watchers_))
+				current_watchers_.push_back(new_observer);
+		}
+
+		/**
+		\brief Remove an observer from this observable.
+		*/
+		void RemoveObserver(AnyObserver* observer) const
+		{
+			current_watchers_.erase(std::remove(current_watchers_.begin(), current_watchers_.end(), observer), current_watchers_.end());
 		}
 
 	protected:
@@ -154,12 +163,19 @@ namespace bertini{
 
 		}
 
+		void NotifyObservers(AnyEvent & e) const
+		{
+
+			for (auto& obs : current_watchers_)
+				obs->Observe(e);
+		}
+
 
 	private:
 
 		using ObserverContainer = std::vector<AnyObserver*>;
 
-		ObserverContainer current_watchers_;
+		mutable ObserverContainer current_watchers_;
 	};
 
 } // namespace bertini

@@ -13,14 +13,14 @@
 //You should have received a copy of the GNU General Public License
 //along with node_serialization.cpp.  If not, see <http://www.gnu.org/licenses/>.
 //
-// Copyright(C) 2015, 2016 by Bertini2 Development Team
+// Copyright(C) 2015 - 2017 by Bertini2 Development Team
 //
 // See <http://www.gnu.org/licenses/> for a copy of the license, 
 // as well as COPYING.  Bertini2 is provided with permitted 
 // additional terms in the b2/licenses/ directory.
 
 // individual authors of this file include:
-// daniel brake, university of notre dame
+// dani brake, university of wisconsin eau claire
 
 //  node_serialization.cpp
 //
@@ -47,29 +47,35 @@
 #include <fstream>
 
 #include "bertini2/function_tree.hpp"
-#include "bertini2/system.hpp"
-#include "bertini2/system_parsing.hpp"
+#include "bertini2/system/system.hpp"
+#include "bertini2/io/parsing/system_parsers.hpp"
+#include "bertini2/system/precon.hpp"
 
+
+
+#include "externs.hpp"
+
+
+
+BOOST_AUTO_TEST_SUITE(node_serialization)
+
+template<typename NumType> using Vec = bertini::Vec<NumType>;
+template<typename NumType> using Mat = bertini::Mat<NumType>;
 using Variable = bertini::node::Variable;
 using Node = bertini::node::Node;
 using Float = bertini::node::Float;
+using bertini::MakeVariable;
+using bertini::MakeFloat;
 
 using dbl = bertini::dbl;
 using mpfr = bertini::mpfr;
 
 using System = bertini::System;
 
-#include "externs.hpp"
-
-template<typename NumType> using Vec = bertini::Vec<NumType>;
-template<typename NumType> using Mat = bertini::Mat<NumType>;
-
-BOOST_AUTO_TEST_SUITE(node_serialization)
-
 
 BOOST_AUTO_TEST_CASE(serialize_variable)
 {
-	std::shared_ptr<Variable> x = std::make_shared<Variable>("x");
+	std::shared_ptr<Variable> x = MakeVariable("x");
 
 
 	{
@@ -96,7 +102,7 @@ BOOST_AUTO_TEST_CASE(serialize_variable)
 
 BOOST_AUTO_TEST_CASE(serialize_float)
 {
-	std::shared_ptr<Float> two_point_oh_four = std::make_shared<Float>("2.04");
+	std::shared_ptr<Float> two_point_oh_four = MakeFloat("2.04");
 
 	{
 		std::ofstream fout("serialization_test_node");
@@ -121,7 +127,7 @@ BOOST_AUTO_TEST_CASE(serialize_float)
 
 BOOST_AUTO_TEST_CASE(serialize_complicated_expression)
 {
-	std::shared_ptr<Variable> x = std::make_shared<Variable>("x");
+	std::shared_ptr<Variable> x = MakeVariable("x");
 
 	auto f = exp(sqrt(pow(pow(x*x+ (-x) -sin(x)+cos(x)+tan(x),x),3)))/x;
 
@@ -163,10 +169,7 @@ BOOST_AUTO_TEST_CASE(system_serialize)
 	std::string str = "function f1, f2; variable_group x1, x2; y = x1*x2; f1 = y*y; f2 = x1*y; ";
 
 	bertini::System sys;
-	std::string::const_iterator iter = str.begin();
-	std::string::const_iterator end = str.end();
-	bertini::SystemParser<std::string::const_iterator> S;
-	phrase_parse(iter, end, S, boost::spirit::ascii::space, sys);
+	bertini::parsing::classic::parse(str.begin(), str.end(), sys);
 
 	
 
@@ -206,6 +209,40 @@ BOOST_AUTO_TEST_CASE(system_serialize)
 
 }
 
+BOOST_AUTO_TEST_CASE(system_clone)
+{
+	std::string str = "function f1, f2; variable_group x1, x2; y = x1*x2; f1 = y*y; f2 = x1*y; ";
+
+	bertini::System sys;
+	bertini::parsing::classic::parse(str.begin(), str.end(), sys);
+
+	
+	auto sys2 = Clone(sys);
+	
+
+	Vec<dbl> values(2);
+
+	values(0) = dbl(2.0);
+	values(1) = dbl(3.0);
+
+	Vec<dbl> v = sys2.Eval(values);
+
+	BOOST_CHECK_EQUAL(v.size(),2);
+
+	BOOST_CHECK_EQUAL(v(0), 36.0);
+	BOOST_CHECK_EQUAL(v(1), 12.0);
+	
+
+}
+
+
+BOOST_AUTO_TEST_CASE(clone_griewank_osborn)
+{
+
+	auto gw = bertini::system::Precon::GriewankOsborn();
+
+	auto clone = bertini::Clone(gw);
+}
 
 BOOST_AUTO_TEST_SUITE_END()
 

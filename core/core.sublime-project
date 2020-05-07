@@ -21,15 +21,21 @@
 										"b2_class_test",
 										"b2_classic_compatibility_test",
 										"b2_timing_test",
-										"bertini_*.log",
+										"tracking_basics_test",
+										"settings_test",
+										"nag_algorithms_test",
+										"endgames_test",
+										"pool_test",
+										"generating_test",
 										"config.log",
 										"config.status",
 										"configure",
 										"*.trs",
-										"*.log"],
+										"ltmain.sh"],
 			"folder_exclude_patterns": [
 				".deps",
 				".libs",
+				"*.dtps",
 				"autom4te.cache",
 				"generated_documentation"]
 		}
